@@ -1,0 +1,59 @@
+{
+  "dataset_name": "Thematic Survey & Text Corpus (JSON)",
+  "records": [
+    {
+      "full_name": "Rosel Mina",
+      "degree_program": "BS Computer Science (Data Mining)",
+      "headline": "Software Developer at Amdocs",
+      "current_position": "Software Developer",
+      "current_company": "Amdocs",
+      "skills": "Python, Java, Cloud Computing, NLP, Data Analysis, SQL",
+      "about": "Working on enterprise telecommunications backend microservices and automated data pipelines."
+    },
+    {
+      "full_name": "Jake Ronian Quiming",
+      "degree_program": "BS Computer Science (Data Mining)",
+      "headline": "Data Analyst at Pru Life UK",
+      "current_position": "Data Analyst",
+      "current_company": "Pru Life UK",
+      "skills": "Data Analytics, PostgreSQL, Python, Power BI, Financial Analysis",
+      "about": "Building predictive analytics models and interactive dashboards for insurance portfolio analysis."
+    },
+    {
+      "full_name": "Kaizen Magbanua",
+      "degree_program": "BS Computer Science",
+      "headline": "Customer Support Representative",
+      "current_position": "Support Representative",
+      "current_company": "Zamora Wholesaling",
+      "skills": "Customer Service, Microsoft Office, Data Entry, Online Support",
+      "about": "Handling customer inquiries, administrative paperwork, and inventory encoding."
+    },
+    {
+      "full_name": "Mikaela Mae De Guzman",
+      "degree_program": "BS Computer Science",
+      "headline": "Freelance Graphics Designer & Video Editor",
+      "current_position": "Freelance Graphics Designer",
+      "current_company": "Freelance",
+      "skills": "Adobe Premiere Pro, Photoshop, Figma, Canva, Video Post-Production",
+      "about": "Producing social media graphics, brand kits, and video content for digital marketing campaigns."
+    },
+    {
+      "full_name": "Carl Rainier Manalili",
+      "degree_program": "BS Computer Science",
+      "headline": "Fresh BSCS Graduate | Open to Work",
+      "current_position": "",
+      "current_company": "",
+      "skills": "Python, React, SQL, JavaScript",
+      "about": "Actively seeking entry-level software engineering or data science opportunities."
+    },
+    {
+      "full_name": "Roland Francisco III",
+      "degree_program": "BS Information Technology",
+      "headline": "Cloud & Network Security Administrator",
+      "current_position": "System Administrator",
+      "current_company": "Converge ICT",
+      "skills": "Linux, AWS, Cisco Networking, Cybersecurity, Firewall",
+      "about": "Maintaining cloud infrastructure security, VPN tunnels, and enterprise Linux servers."
+    }
+  ]
+}

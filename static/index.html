@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DistilBERT Thematic Analysis Studio</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="brand-group">
+      <div class="brand-icon">DB</div>
+      <div>
+        <div class="brand-title">
+          DistilBERT Thematic Analysis Studio
+          <span id="modelStatusPill" class="status-pill">
+            <span class="status-dot"></span>
+            <span id="modelStatusText">Loading ONNX Engine...</span>
+          </span>
+        </div>
+        <div class="brand-subtitle" id="modelArchSubtitle">
+          6-Layer Transformer Sequence Classifier + Multi-Format Thematic Coding &amp; TF-IDF Discovery Engine
+        </div>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <button class="btn btn-primary btn-sm" onclick="triggerFileInput()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload Dataset
+      </button>
+      <button class="btn btn-secondary btn-sm" id="themeToggleBtn" onclick="toggleThemeMode()">Light Mode</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs" role="tablist">
+      <button class="nav-tab active" data-tab="ingest" onclick="switchTab('ingest')">
+        1. Dataset Ingestion &amp; Mapping
+      </button>
+      <button class="nav-tab" data-tab="dashboard" onclick="switchTab('dashboard')">
+        2. Thematic Dashboard &amp; Charts
+        <span class="tab-badge" id="dashboardBadge">0</span>
+      </button>
+      <button class="nav-tab" data-tab="records" onclick="switchTab('records')">
+        3. Coded Corpus &amp; Deep Inspector
+        <span class="tab-badge" id="recordsBadge">0</span>
+      </button>
+      <button class="nav-tab" data-tab="codebook" onclick="switchTab('codebook')">
+        4. Custom Codebook &amp; DistilBERT Specs
+      </button>
+    </nav>
+
+    <!-- TAB 1: DEDICATED FILE INGESTION STUDIO -->
+    <section id="tab-ingest" class="tab-panel active">
+      <div class="ingest-container">
+        <!-- Main Ingestion Card -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Dataset File Ingestion
+              </div>
+              <div class="card-subtitle">Import structured or unstructured dataset files for DistilBERT sequence inference and automated thematic coding</div>
+            </div>
+            <div class="template-links">
+              <span class="template-label">Download Templates:</span>
+              <a class="btn btn-secondary btn-sm" href="/api/samples/csv?download=true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                CSV
+              </a>
+              <a class="btn btn-secondary btn-sm" href="/api/samples/xlsx?download=true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Excel (.xlsx)
+              </a>
+              <a class="btn btn-secondary btn-sm" href="/api/samples/xml?download=true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                XML
+              </a>
+              <a class="btn btn-secondary btn-sm" href="/api/samples/json?download=true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                JSON
+              </a>
+              <a class="btn btn-secondary btn-sm" href="/api/samples/txt?download=true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Plain Text
+              </a>
+            </div>
+          </div>
+          <div class="card-body">
+            <!-- Dropzone -->
+            <div id="dropzone" class="dropzone" onclick="document.getElementById('fileInput').click()">
+              <div class="dropzone-icon">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              </div>
+              <div class="dropzone-title">Drag &amp; drop your dataset file here, or click to browse</div>
+              <div class="dropzone-sub">Upload CSV, Excel, XML, JSON, or Plain-text files (up to 10 MB and 5,000 records)</div>
+              <div class="format-badges">
+                <span class="format-badge">CSV (.csv)</span>
+                <span class="format-badge">Excel (.xlsx)</span>
+                <span class="format-badge">XML (.xml)</span>
+                <span class="format-badge">JSON (.json)</span>
+                <span class="format-badge">Plain Text (.txt)</span>
+              </div>
+              <input id="fileInput" type="file" accept=".csv,.xlsx,.json,.xml,.txt" style="display:none" onchange="handleFileSelect(event)" />
+            </div>
+
+            <!-- Uploaded File Preview & Field Mapper -->
+            <div id="uploadPreviewBox" style="display:none; margin-top:20px; border-top:1px solid var(--border-color); padding-top:20px;">
+              <div class="upload-file-header">
+                <div class="upload-file-info">
+                  <div class="file-icon-badge">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  </div>
+                  <div>
+                    <div style="font-weight:800; font-size:1rem;" id="uploadedFileName">dataset.csv</div>
+                    <div style="font-size:0.78rem; color:var(--text-muted);" id="uploadedFileMeta">0 records detected</div>
+                  </div>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                  <button class="btn btn-secondary btn-sm" onclick="clearUploadedFile()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    Clear File
+                  </button>
+                  <button class="btn btn-primary" id="runFileAnalysisBtn" onclick="runUploadedFileAnalysis()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Run DistilBERT Thematic Analysis
+                  </button>
+                </div>
+              </div>
+
+              <!-- Column Mapping Grid -->
+              <div class="column-mapping-container">
+                <div class="column-mapping-header">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                  <span>Field &amp; Column Mapping (Auto-detected from file headers / tags)</span>
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;" id="columnMapperGrid"></div>
+              </div>
+
+              <!-- Ingestion Parameters Grid -->
+              <div class="pipeline-params-grid">
+                <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+                  <input type="checkbox" id="useHybridRulesCheckbox" checked style="margin-top:4px; transform:scale(1.15);" />
+                  <div>
+                    <div style="font-weight:700; font-size:0.86rem;">Enable CHED Degree-Alignment Hybrid Layer</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">Combines DistilBERT Softmax sequence probabilities with course-major taxonomy rules</div>
+                  </div>
+                </label>
+
+                <div>
+                  <label class="form-label" for="clusterCountSelect">Emergent K-Means Cluster Count (k)</label>
+                  <select id="clusterCountSelect" class="select">
+                    <option value="3">3 Emergent Clusters</option>
+                    <option value="4" selected>4 Emergent Clusters (Recommended)</option>
+                    <option value="5">5 Emergent Clusters</option>
+                    <option value="6">6 Emergent Clusters</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Sample Rows Preview Table -->
+              <div style="margin-top:16px;">
+                <div style="font-size:0.78rem; font-weight:700; color:var(--text-muted); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  Ingestion Preview (First 5 Records)
+                </div>
+                <div class="table-wrap" style="max-height:240px; overflow-y:auto; border:1px solid var(--border-color); border-radius:var(--radius-sm);">
+                  <table class="data-table" id="uploadPreviewTable">
+                    <thead></thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Bottom Trigger -->
+              <div style="margin-top:20px; display:flex; justify-content:flex-end;">
+                <button class="btn btn-primary" style="padding:12px 24px; font-size:0.92rem;" onclick="runUploadedFileAnalysis()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Execute DistilBERT Thematic Analysis
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: THEMATIC DASHBOARD & VISUALIZATIONS -->
+    <section id="tab-dashboard" class="tab-panel">
+      <!-- KPI Row -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Total Coded Records</div>
+          <div class="kpi-value" id="kpiTotalRecords">0</div>
+          <div class="kpi-sub" id="kpiTotalLatency">0.0 ms total inference time</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Dominant Theme</div>
+          <div class="kpi-value" id="kpiDominantTheme" style="font-size:1.15rem; color:var(--accent);">—</div>
+          <div class="kpi-sub" id="kpiThemeCountSub">Across 8 active codebook themes</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">DistilBERT Outcome Breakdown</div>
+          <div class="kpi-value" id="kpiEmploymentRate" style="color:var(--emerald);">0%</div>
+          <div class="kpi-sub" id="kpiOutcomeCounts">0 Employed · 0 Under · 0 Unemp</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Mean Softmax Confidence</div>
+          <div class="kpi-value" id="kpiMeanConfidence" style="color:var(--cyan);">0%</div>
+          <div class="kpi-sub">6-Layer DistilBERT Softmax Probability</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Avg Inference Latency</div>
+          <div class="kpi-value" id="kpiAvgLatency">0.0 ms</div>
+          <div class="kpi-sub">ONNX Runtime per sequence</div>
+        </div>
+      </div>
+
+      <!-- Qualitative Synthesis Insights -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Automated Thematic Synthesis &amp; Research Findings</div>
+            <div class="card-subtitle">Generated from DistilBERT sequence classifications and thematic codebook frequencies</div>
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('csv')">Export .CSV</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('xlsx')">Export .XLSX</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('json')">Export .JSON</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('xml')">Export .XML</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="insightsContainer" class="insights-list"></div>
+        </div>
+      </div>
+
+      <div class="grid-equal-2">
+        <!-- Theme Distribution Chart -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Thematic Distribution &amp; Salient TF-IDF N-Grams</div>
+              <div class="card-subtitle">Frequency of primary themes and extracted domain keyphrases per theme</div>
+            </div>
+          </div>
+          <div class="card-body" id="themeDistributionChart"></div>
+        </div>
+
+        <!-- Theme x DistilBERT Outcome Cross-Tabulation -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Theme × DistilBERT Outcome Cross-Tabulation</div>
+              <div class="card-subtitle">How each thematic category correlates with Employed, Underemployed, and Unemployed predictions</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-wrap">
+              <table class="data-table" id="crossTabTable">
+                <thead>
+                  <tr>
+                    <th>Thematic Category</th>
+                    <th>Total</th>
+                    <th>Employed</th>
+                    <th>Underemployed</th>
+                    <th>Unemployed</th>
+                    <th>Outcome Balance</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-equal-2">
+        <!-- Unsupervised K-Means Emergent Clusters -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Unsupervised TF-IDF + MiniBatch K-Means Emergent Clusters</div>
+              <div class="card-subtitle">Data-driven sub-themes discovered automatically without predefined rules</div>
+            </div>
+          </div>
+          <div class="card-body" id="emergentClustersContainer"></div>
+        </div>
+
+        <!-- Top Matched Codes & Global TF-IDF Keyphrases -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Corpus Keyphrases &amp; Thematic Trigger Codes</div>
+              <div class="card-subtitle">Top matched codebook phrases and highest-weighted TF-IDF unigrams/bigrams</div>
+            </div>
+          </div>
+          <div class="card-body" id="globalKeyphrasesContainer"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: CODED CORPUS TABLE & DEEP INSPECTOR -->
+    <section id="tab-records" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Coded Corpus Explorer &amp; DistilBERT Sequence Inspector</div>
+            <div class="card-subtitle">Click "Inspect" on any record to view WordPiece tokens, Softmax logits, and theme scoring</div>
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('csv')">Download CSV</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('xlsx')">Download Excel (.xlsx)</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('json')">Download JSON</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('xml')">Download XML</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Filters Bar -->
+          <div class="records-filters">
+            <input id="recordSearchInput" class="input" placeholder="Search by name, theme, code, skill, or text..." oninput="renderRecordsTable()" />
+            <select id="filterThemeSelect" class="select" onchange="renderRecordsTable()">
+              <option value="ALL">All Primary Themes</option>
+            </select>
+            <select id="filterStatusSelect" class="select" onchange="renderRecordsTable()">
+              <option value="ALL">All DistilBERT Outcomes</option>
+              <option value="employed">Employed</option>
+              <option value="underemployed">Underemployed</option>
+              <option value="unemployed">Unemployed</option>
+            </select>
+            <select id="filterClusterSelect" class="select" onchange="renderRecordsTable()">
+              <option value="ALL">All Emergent Clusters</option>
+            </select>
+            <label class="form-label">Minimum confidence
+              <select id="filterConfidenceSelect" class="select" onchange="renderRecordsTable()">
+                <option value="0">Any confidence</option>
+                <option value="0.5">50%+</option>
+                <option value="0.75">75%+</option>
+                <option value="0.9">90%+</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="table-wrap">
+            <table class="data-table" id="codedRecordsTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Identifier / Profile</th>
+                  <th>Primary &amp; Secondary Theme</th>
+                  <th>Matched Thematic Codes</th>
+                  <th>Emergent Cluster</th>
+                  <th>DistilBERT Outcome</th>
+                  <th>Softmax Conf.</th>
+                  <th>Tokens / Latency</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: CUSTOM CODEBOOK & DISTILBERT ARCHITECTURE -->
+    <section id="tab-codebook" class="tab-panel">
+      <div class="grid-2">
+        <!-- Custom Thematic Codebook Editor -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Customizable Thematic Codebook</div>
+              <div class="card-subtitle">Modify existing themes, add new custom themes, or edit seed keywords and re-run coding</div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-secondary btn-sm" onclick="resetCodebookThemes()">Reset Defaults</button>
+              <button class="btn btn-secondary btn-sm" onclick="addNewThemeCard()">+ Add Custom Theme</button>
+              <button class="btn btn-primary btn-sm" onclick="saveAndReanalyzeThemes()">Save &amp; Re-Analyze Corpus</button>
+            </div>
+          </div>
+          <div class="card-body" id="codebookEditorContainer"></div>
+        </div>
+
+        <!-- DistilBERT Model Specifications & Benchmark Card -->
+        <div>
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">DistilBERT ONNX Architecture &amp; Runtime Specifications</div>
+                <div class="card-subtitle">Live introspection of the loaded transformer sequence classifier</div>
+              </div>
+            </div>
+            <div class="card-body" id="modelSpecsContainer"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">7-Stage DistilBERT Thematic Processing Pipeline</div>
+                <div class="card-subtitle">How raw text is transformed into outcome probabilities and themes</div>
+              </div>
+            </div>
+            <div class="card-body" style="font-size:0.82rem; color:var(--text-secondary); display:flex; flex-direction:column; gap:10px;">
+              <div class="insight-item"><strong>1. Standardized Sequence Construction:</strong> Joins <code>Headline | Position | Company | About | Skills</code> into a unified semantic sequence.</div>
+              <div class="insight-item"><strong>2. WordPiece Subword Tokenization:</strong> Maps text into 30,522-vocab subword IDs prepended with <code>[CLS]</code> (101) and appended with <code>[SEP]</code> (102).</div>
+              <div class="insight-item"><strong>3. Dual Embedding Lookup:</strong> Combines Token Embeddings + Positional Embeddings into a $(1 \times L \times 768)$ dense tensor.</div>
+              <div class="insight-item"><strong>4. 6-Layer Multi-Head Self-Attention:</strong> 12 attention heads ($d_k = 64$) link intent modifiers (e.g., <em>"seeking"</em>, <em>"aspiring"</em>) directly to role nouns.</div>
+              <div class="insight-item"><strong>5. [CLS] Pooled Representation:</strong> Extracts the 768-dimensional contextual summary vector at index 0.</div>
+              <div class="insight-item"><strong>6. Linear Logits &amp; Softmax:</strong> Projects $\mathbb{R}^{768} \rightarrow \mathbb{R}^3$ logits and computes Softmax probabilities $P(y=k|\mathbf{x})$.</div>
+              <div class="insight-item"><strong>7. Thematic Coding &amp; TF-IDF Clustering:</strong> Combines codebook phrase weights, DistilBERT priors, and K-Means clustering.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Deep Inspector Modal -->
+  <div id="inspectorModal" class="modal-backdrop" onclick="if(event.target===this) closeInspectorModal()">
+    <div class="modal-box">
+      <div class="card-header">
+        <div>
+          <div class="card-title" id="modalRecordTitle">DistilBERT Deep Sequence Inspector</div>
+          <div class="card-subtitle" id="modalRecordSubtitle">WordPiece Tokenization, Raw Logits, Softmax Probabilities &amp; Thematic Coding</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="closeInspectorModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Close
+        </button>
+      </div>
+      <div class="card-body" id="modalInspectorBody"></div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastBanner" class="toast-banner"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

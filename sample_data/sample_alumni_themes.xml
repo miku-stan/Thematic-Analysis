@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ThematicCorpus institution="State University">
+  <Record id="ISU-001">
+    <full_name>Godwin Valenton Bardiago</full_name>
+    <degree_program>Bachelor of Science in Computer Science</degree_program>
+    <headline>Full-Stack Web Developer | ReactJS, Laravel, Node.js</headline>
+    <current_position>Full-Stack Developer</current_position>
+    <current_company>TechNova Solutions</current_company>
+    <skills>React.js, Next.js, Laravel, PostgreSQL, TypeScript, REST APIs</skills>
+    <about>Developing full-stack web applications and cloud APIs for enterprise clients.</about>
+  </Record>
+  <Record id="ISU-002">
+    <full_name>Maria Clara Santos</full_name>
+    <degree_program>Bachelor of Science in Computer Science (Data Mining)</degree_program>
+    <headline>AI &amp; NLP Data Scientist</headline>
+    <current_position>Data Scientist</current_position>
+    <current_company>Thinking Machines</current_company>
+    <skills>Python, DistilBERT, Machine Learning, SQL, NLP, TensorFlow</skills>
+    <about>Designing transformer sequence classification pipelines and thematic text analytics models.</about>
+  </Record>
+  <Record id="ISU-003">
+    <full_name>Alexis Balbido</full_name>
+    <degree_program>Bachelor of Science in Computer Science</degree_program>
+    <headline>Customer Service Representative at Concentrix</headline>
+    <current_position>Customer Service Representative</current_position>
+    <current_company>Concentrix</current_company>
+    <skills>Call Center Support, CRM, Chat Support, Communication</skills>
+    <about>Working in a BPO call center handling customer billing and account support tickets.</about>
+  </Record>
+  <Record id="ISU-004">
+    <full_name>John Michael Sagario</full_name>
+    <degree_program>Bachelor of Science in Information Technology</degree_program>
+    <headline>IT Project Manager at Ernst &amp; Young</headline>
+    <current_position>Project Manager</current_position>
+    <current_company>Ernst &amp; Young</current_company>
+    <skills>Project Management, Agile Scrum, Business Analysis, Operations</skills>
+    <about>Managing enterprise technology rollouts, stakeholder communication, and sprint delivery.</about>
+  </Record>
+  <Record id="ISU-005">
+    <full_name>Cyra Castillo Cacho</full_name>
+    <degree_program>Bachelor of Science in Information Technology</degree_program>
+    <headline>Recent Graduate | Actively Seeking Junior Developer Roles</headline>
+    <current_position></current_position>
+    <current_company></current_company>
+    <skills>Java, HTML, CSS, Web Development</skills>
+    <about>Fresh graduate open to work and looking for entry-level software or IT support positions.</about>
+  </Record>
+  <Record id="ISU-006">
+    <full_name>Angela Mae Villanueva</full_name>
+    <degree_program>Bachelor of Science in Information Technology</degree_program>
+    <headline>Undergraduate Student &amp; OJT Intern</headline>
+    <current_position>OJT Trainee</current_position>
+    <current_company>Isabela State University</current_company>
+    <skills>PHP, MySQL, Bootstrap, Research</skills>
+    <about>Currently completing academic capstone thesis and internship training at the university.</about>
+  </Record>
+</ThematicCorpus>
