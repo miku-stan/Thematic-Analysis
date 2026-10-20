@@ -217,9 +217,9 @@
           <div class="kpi-sub" id="kpiThemeCountSub">Across 8 active codebook themes</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">DistilBERT Outcome Breakdown</div>
+          <div class="kpi-label" id="kpiOutcomeLabel">Governance Institutionalization Rate</div>
           <div class="kpi-value" id="kpiEmploymentRate" style="color:var(--emerald);">0%</div>
-          <div class="kpi-sub" id="kpiOutcomeCounts">0 Employed · 0 Under · 0 Unemp</div>
+          <div class="kpi-sub" id="kpiOutcomeCounts">0 Sustained · 0 Constrained · 0 Deficient</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Mean Softmax Confidence</div>
@@ -294,6 +294,34 @@
         </div>
       </div>
 
+      <!-- Respondent Group × Theme Cross-Tabulation Matrix -->
+      <div class="card" id="respondentGroupCard">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Respondent Group &times; Theme Distribution Matrix</div>
+            <div class="card-subtitle">Tripartite stakeholder comparison across Mayor/Admin, LCE/Focal Persons, and DILG/PLGU evaluators</div>
+          </div>
+          <span class="status-badge" style="background:rgba(99, 102, 241, 0.15); color:var(--accent); font-weight:700;">Tripartite Governance Breakdown</span>
+        </div>
+        <div class="card-body">
+          <div class="table-wrap">
+            <table class="data-table" id="respondentGroupTable">
+              <thead>
+                <tr>
+                  <th style="min-width:220px;">Thematic Category</th>
+                  <th style="min-width:130px; text-align:center;">Mayor / Admin</th>
+                  <th style="min-width:130px; text-align:center;">LCE / Focal</th>
+                  <th style="min-width:130px; text-align:center;">DILG / PLGU</th>
+                  <th style="min-width:90px; text-align:center;">Total</th>
+                  <th style="min-width:220px;">Primary Stakeholder Concentration</th>
+                </tr>
+              </thead>
+              <tbody id="respondentGroupTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <div class="grid-equal-2">
         <!-- Theme Distribution Chart -->
         <div class="card">
@@ -306,12 +334,12 @@
           <div class="card-body" id="themeDistributionChart"></div>
         </div>
 
-        <!-- Theme x DistilBERT Outcome Cross-Tabulation -->
+        <!-- Theme x Governance Trajectory Cross-Tabulation -->
         <div class="card">
           <div class="card-header">
             <div>
-              <div class="card-title">Theme × DistilBERT Outcome Cross-Tabulation</div>
-              <div class="card-subtitle">How each thematic category correlates with Employed, Underemployed, and Unemployed predictions</div>
+              <div class="card-title" id="crossTabCardTitle">Theme &times; Governance Trajectory Cross-Tabulation</div>
+              <div class="card-subtitle" id="crossTabCardSubtitle">How each thematic category correlates with Sustained, Constrained, and Deficient governance outcomes</div>
             </div>
           </div>
           <div class="card-body">
@@ -321,10 +349,10 @@
                   <tr>
                     <th>Thematic Category</th>
                     <th>Total</th>
-                    <th>Employed</th>
-                    <th>Underemployed</th>
-                    <th>Unemployed</th>
-                    <th>Outcome Balance</th>
+                    <th id="thCol1">Sustained / Inst.</th>
+                    <th id="thCol2">Constrained / In-Prog.</th>
+                    <th id="thCol3">Deficient / Unaligned</th>
+                    <th id="thColBalance">Institutionalization Rate</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -381,11 +409,17 @@
             <select id="filterThemeSelect" class="select" onchange="renderRecordsTable()">
               <option value="ALL">All Primary Themes</option>
             </select>
+            <select id="filterGroupSelect" class="select" onchange="renderRecordsTable()">
+              <option value="ALL">All Respondent Groups</option>
+              <option value="Mayor / Admin">Mayor / Admin</option>
+              <option value="LCE / Focal">LCE / Focal</option>
+              <option value="DILG / PLGU">DILG / PLGU</option>
+            </select>
             <select id="filterStatusSelect" class="select" onchange="renderRecordsTable()">
-              <option value="ALL">All DistilBERT Outcomes</option>
-              <option value="employed">Employed</option>
-              <option value="underemployed">Underemployed</option>
-              <option value="unemployed">Unemployed</option>
+              <option value="ALL">All Governance Trajectories</option>
+              <option value="employed">Sustained / Institutionalized</option>
+              <option value="underemployed">Constrained / In-Progress</option>
+              <option value="unemployed">Deficient / Unaligned</option>
             </select>
             <select id="filterClusterSelect" class="select" onchange="renderRecordsTable()">
               <option value="ALL">All Emergent Clusters</option>
@@ -406,10 +440,11 @@
                 <tr>
                   <th>#</th>
                   <th>Identifier / Profile</th>
+                  <th>Respondent Group</th>
                   <th>Primary &amp; Secondary Theme</th>
                   <th>Matched Thematic Codes</th>
                   <th>Emergent Cluster</th>
-                  <th>DistilBERT Outcome</th>
+                  <th>Governance Trajectory</th>
                   <th>Softmax Conf.</th>
                   <th>Tokens / Latency</th>
                   <th>Action</th>

@@ -93,6 +93,61 @@ class StudioTests(unittest.TestCase):
         self.assertEqual(self.client.get("/api/themes").json()["themes"][0]["id"], "custom_qa")
         self.client.post("/api/themes/reset")
 
+    def test_respondent_groups_and_breakdown(self):
+        from engine.thematic_coder import classify_respondent_group, RESPONDENT_GROUPS
+
+        # 1. Test role classification mappings
+        self.assertEqual(classify_respondent_group("Municipal Mayor"), "Mayor / Admin")
+        self.assertEqual(classify_respondent_group("City Mayor"), "Mayor / Admin")
+        self.assertEqual(classify_respondent_group("Vice Mayor & Sanggunian Lead"), "Mayor / Admin")
+        self.assertEqual(classify_respondent_group("Executive Assistant to the Mayor"), "Mayor / Admin")
+        self.assertEqual(classify_respondent_group("BAC Secretariat"), "Mayor / Admin")
+
+        self.assertEqual(classify_respondent_group("SGLG Focal Person"), "LCE / Focal")
+        self.assertEqual(classify_respondent_group("Planning & Development Coordinator"), "LCE / Focal")
+        self.assertEqual(classify_respondent_group("Municipal Budget Officer"), "LCE / Focal")
+        self.assertEqual(classify_respondent_group("Disaster Risk Reduction Officer"), "LCE / Focal")
+
+        self.assertEqual(classify_respondent_group("DILG Field Officer"), "DILG / PLGU")
+        self.assertEqual(classify_respondent_group("MLGOO"), "DILG / PLGU")
+        self.assertEqual(classify_respondent_group("Provincial Assessment Team Lead"), "DILG / PLGU")
+
+        # 2. Test analysis output contains respondent_group and respondent_group_breakdown
+        sample = self.client.get("/api/samples/csv").json()["data"]
+        response = self.client.post("/api/analyze", json={
+            "records": sample["records"],
+            "column_mapping": sample["suggested_mapping"],
+            "n_clusters": 3,
+        })
+        self.assertEqual(response.status_code, 200, response.text)
+        analysis = response.json()["data"]
+
+        for rec in analysis["records"]:
+            self.assertIn("respondent_group", rec)
+            self.assertIn(rec["respondent_group"], RESPONDENT_GROUPS)
+
+        rgb = analysis.get("respondent_group_breakdown")
+        self.assertIsNotNone(rgb)
+        self.assertEqual(rgb["groups"], RESPONDENT_GROUPS)
+        self.assertTrue(len(rgb["themes"]) > 0)
+        total_from_groups = sum(rgb["group_totals"].values())
+        self.assertEqual(total_from_groups, analysis["summary"]["total_records"])
+
+        # 3. Test export contains Respondent_Group in CSV and XLSX sheet
+        export_csv = self.client.post("/api/export", json={"format": "csv", "analysis": analysis})
+        self.assertEqual(export_csv.status_code, 200)
+        self.assertIn(b"Respondent_Group", export_csv.content)
+
+        export_xlsx = self.client.post("/api/export", json={"format": "xlsx", "analysis": analysis})
+        self.assertEqual(export_xlsx.status_code, 200)
+        xls_file = pd.ExcelFile(io.BytesIO(export_xlsx.content))
+        self.assertIn("Respondent_Group_Breakdown", xls_file.sheet_names)
+        df_records = pd.read_excel(xls_file, sheet_name="Coded_Records")
+        self.assertIn("Respondent_Group", df_records.columns)
+        df_rgb = pd.read_excel(xls_file, sheet_name="Respondent_Group_Breakdown")
+        for g in RESPONDENT_GROUPS:
+            self.assertIn(g, df_rgb.columns)
+
 
 if __name__ == "__main__":
     unittest.main()

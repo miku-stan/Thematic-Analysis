@@ -40,6 +40,10 @@ COLUMN_ALIASES: Dict[str, List[str]] = {
         "observation", "statement", "about", "bio", "response", "feedback", "comment", "narrative",
         "text", "description", "open_ended", "reflection", "experience_summary", "input_text"
     ],
+    "respondent_group": [
+        "respondent_group", "stakeholder_group", "group", "stakeholder_category",
+        "tripartite_group", "respondent_category"
+    ],
 }
 
 
@@ -544,6 +548,7 @@ def export_results(analysis_result: Dict[str, Any], fmt: str = "csv") -> Tuple[b
         flat_rows.append({
             "Row": r.get("row_index"),
             "Identifier": r.get("identifier"),
+            "Respondent_Group": r.get("respondent_group", ""),
             "Primary_Theme": r.get("primary_theme"),
             "Secondary_Theme": r.get("secondary_theme") or "",
             "Theme_Confidence": r.get("theme_confidence"),
@@ -552,6 +557,7 @@ def export_results(analysis_result: Dict[str, Any], fmt: str = "csv") -> Tuple[b
             "Trajectory_Tone": r.get("trajectory_tone") or "",
             "DistilBERT_Prediction": r.get("distilbert_label"),
             "Final_Outcome_Status": r.get("final_status"),
+            "Governance_Trajectory": r.get("governance_status") or r.get("final_status"),
             "DistilBERT_Confidence": r.get("confidence"),
             "Prob_Employed": probs.get("employed", 0.0),
             "Prob_Underemployed": probs.get("underemployed", 0.0),
@@ -605,6 +611,15 @@ def export_results(analysis_result: Dict[str, Any], fmt: str = "csv") -> Tuple[b
                 matrix_rows = cross_case.get("rows") if isinstance(cross_case, dict) else cross_case
                 if matrix_rows:
                     pd.DataFrame(matrix_rows).to_excel(writer, index=False, sheet_name="Cross_Case_Matrix")
+            rgb = analysis_result.get("respondent_group_breakdown")
+            if rgb and rgb.get("groups") and rgb.get("themes"):
+                breakdown_rows = []
+                for theme_name in rgb["themes"]:
+                    row_dict = {"Theme": theme_name}
+                    for group in rgb["groups"]:
+                        row_dict[group] = rgb["counts"].get(group, {}).get(theme_name, 0)
+                    breakdown_rows.append(row_dict)
+                pd.DataFrame(breakdown_rows).to_excel(writer, index=False, sheet_name="Respondent_Group_Breakdown")
         return (
             output.getvalue(),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

@@ -584,19 +584,22 @@ body {
   letter-spacing: 0.04em;
 }
 
-.status-employed {
+.status-employed,
+.status-sustained {
   background: rgba(16, 185, 129, 0.16);
   color: #10b981;
   border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
-.status-underemployed {
+.status-underemployed,
+.status-constrained {
   background: rgba(245, 158, 11, 0.16);
   color: #f59e0b;
   border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
-.status-unemployed {
+.status-unemployed,
+.status-deficient {
   background: rgba(239, 68, 68, 0.16);
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.35);
@@ -612,6 +615,34 @@ body {
   font-weight: 700;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
+}
+
+.badge-group {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge-group-mayor {
+  background: rgba(99, 102, 241, 0.16);
+  color: #818cf8;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+}
+
+.badge-group-focal {
+  background: rgba(6, 182, 212, 0.16);
+  color: #22d3ee;
+  border: 1px solid rgba(6, 182, 212, 0.35);
+}
+
+.badge-group-dilg {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
 /* Tables */

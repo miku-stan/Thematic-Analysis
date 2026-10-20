@@ -295,6 +295,33 @@ DOMAIN_STOP_WORDS = set(ENGLISH_STOP_WORDS).union({
     "na", "none", "n/a", "yr", "yrs", "mo", "mos",
 })
 
+RESPONDENT_GROUPS = ["Mayor / Admin", "LCE / Focal", "DILG / PLGU"]
+
+
+def classify_respondent_group(office_role: str) -> str:
+    """Classify a participant's office_role into one of 3 respondent groups."""
+    role_lower = (office_role or "").lower()
+    # Group 3: DILG / PLGU — field officers, assessors, and provincial-level DILG
+    if any(k in role_lower for k in [
+        "mlgoo", "dilg", "provincial", "plgu", "field officer",
+        "assessment team", "provincial assessment", "validator",
+    ]):
+        return "DILG / PLGU"
+    # SGLG Focal Persons / Focal Teams belong to Group 2 unless specifically Mayor
+    if "focal" in role_lower and not any(k in role_lower for k in ["mayor", "vice mayor"]):
+        return "LCE / Focal"
+    # Group 1: Mayor / Admin — executive leadership, administrator, and executive admin support
+    if any(k in role_lower for k in [
+        "mayor", "local chief executive", "vice mayor",
+        "executive assistant", "bac secretariat", "sanggunian",
+        "administrator", "admin", "executive",
+    ]):
+        return "Mayor / Admin"
+    if "lce" in role_lower and "focal" not in role_lower:
+        return "Mayor / Admin"
+    # Group 2: LCE / Focal — department heads and SGLG focal persons (default)
+    return "LCE / Focal"
+
 
 class ThematicCoder:
     """Performs codebook-based thematic coding and unsupervised TF-IDF + K-Means theme discovery."""
@@ -468,6 +495,11 @@ class ThematicCoder:
         all_codes_counter: Counter = Counter()
         total_latency_ms = 0.0
         confidences: List[float] = []
+        # Respondent group × theme tracking
+        group_theme_matrix: Dict[str, Dict[str, int]] = {
+            g: defaultdict(int) for g in RESPONDENT_GROUPS
+        }
+        group_counts: Counter = Counter()
 
         corpus_texts: List[str] = []
 
@@ -501,18 +533,37 @@ class ThematicCoder:
                 or f"Record #{idx + 1}"
             )
 
+            # Classify into one of the 3 professor-defined respondent groups
+            rg_explicit = str(row.get("respondent_group") or row.get("group") or "").strip()
+            office_role_val = str(
+                row.get("current_position")
+                or row.get("office_role")
+                or row.get("position")
+                or row.get("role")
+                or ""
+            )
+            if rg_explicit in RESPONDENT_GROUPS:
+                respondent_group = rg_explicit
+            else:
+                respondent_group = classify_respondent_group(office_role_val or rg_explicit)
+            group_theme_matrix[respondent_group][p_theme] += 1
+            group_counts[respondent_group] += 1
+
             analyzed_rows.append({
                 "row_index": idx + 1,
                 "identifier": str(identifier),
                 "raw_record": row,
                 "input_text": input_text,
                 "headline": str(row.get("headline") or ""),
-                "position": str(row.get("current_position") or row.get("position") or row.get("role") or ""),
+                "position": office_role_val,
                 "company": str(row.get("current_company") or row.get("company") or ""),
                 "degree": str(row.get("degree_program") or row.get("degree") or row.get("course") or ""),
                 "skills": str(row.get("skills") or ""),
+                "respondent_group": respondent_group,
                 "distilbert_label": db_res["distilbert_label"],
                 "final_status": f_status,
+                "governance_status": "Sustained / Institutionalized" if f_status == "employed" else ("Constrained / In-Progress" if f_status == "underemployed" else "Deficient / Unaligned"),
+                "governance_status_key": "sustained" if f_status == "employed" else ("constrained" if f_status == "underemployed" else "deficient"),
                 "confidence": db_res["confidence"],
                 "probabilities": db_res["probabilities"],
                 "logits": db_res["logits"],
@@ -560,6 +611,9 @@ class ThematicCoder:
                 "employed": outcomes["employed"],
                 "underemployed": outcomes["underemployed"],
                 "unemployed": outcomes["unemployed"],
+                "sustained": outcomes["employed"],
+                "constrained": outcomes["underemployed"],
+                "deficient": outcomes["unemployed"],
                 "top_keywords": per_theme_keywords.get(t_name, []),
             })
 
@@ -628,6 +682,23 @@ class ThematicCoder:
             ]
         }
 
+        # Build respondent-group × theme breakdown table
+        all_theme_names = [t["name"] for t in self.themes]
+        respondent_group_breakdown = {
+            "groups": RESPONDENT_GROUPS,
+            "themes": all_theme_names,
+            "counts": {
+                g: {
+                    t_name: group_theme_matrix[g].get(t_name, 0)
+                    for t_name in all_theme_names
+                }
+                for g in RESPONDENT_GROUPS
+            },
+            "group_totals": {
+                g: int(group_counts.get(g, 0)) for g in RESPONDENT_GROUPS
+            },
+        }
+
         return {
             "summary": {
                 "total_records": total_records,
@@ -635,7 +706,11 @@ class ThematicCoder:
                 "employed_count": status_counts["employed"],
                 "underemployed_count": status_counts["underemployed"],
                 "unemployed_count": status_counts["unemployed"],
+                "sustained_count": status_counts["employed"],
+                "constrained_count": status_counts["underemployed"],
+                "deficient_count": status_counts["unemployed"],
                 "employment_alignment_rate": employed_pct,
+                "institutionalization_rate": employed_pct,
                 "mean_confidence_pct": avg_conf,
                 "total_latency_ms": round(total_latency_ms, 2),
                 "avg_latency_ms": avg_latency,
@@ -648,6 +723,7 @@ class ThematicCoder:
             "emergent_clusters": emergent_clusters,
             "qualitative_insights": insights,
             "cross_case_matrix": cross_case_matrix,
+            "respondent_group_breakdown": respondent_group_breakdown,
             "records": analyzed_rows,
         }
 
