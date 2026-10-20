@@ -12,15 +12,20 @@ from zipfile import BadZipFile
 
 import pandas as pd
 import uvicorn
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from engine.distilbert_service import DistilBertService
-from engine.file_ingestor import apply_column_mapping, export_results, parse_uploaded_file
-from engine.thematic_coder import DEFAULT_THEMES, ThematicCoder
+from engine.file_ingestor import (
+    apply_column_mapping,
+    export_results,
+    parse_multiple_uploaded_files,
+    parse_uploaded_file,
+)
+from engine.thematic_coder import DEFAULT_THEMES, THEME_PRESETS, ThematicCoder
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
@@ -82,6 +87,15 @@ async def get_status():
         "ok": True,
         "model": distilbert_service.get_model_status(),
         "themes": thematic_coder.get_themes(),
+        "presets": [
+            {
+                "id": p["id"],
+                "name": p["name"],
+                "description": p["description"],
+                "theme_count": len(p["themes"]),
+            }
+            for p in THEME_PRESETS.values()
+        ],
         "supported_formats": [".csv", ".xlsx", ".json", ".xml", ".txt"],
     }
 
@@ -103,17 +117,61 @@ async def reset_themes():
     return {"ok": True, "themes": updated}
 
 
+@app.get("/api/presets")
+async def get_presets():
+    return {
+        "ok": True,
+        "presets": [
+            {
+                "id": p["id"],
+                "name": p["name"],
+                "description": p["description"],
+                "theme_count": len(p["themes"]),
+            }
+            for p in THEME_PRESETS.values()
+        ],
+    }
+
+
+@app.post("/api/presets/{preset_id}")
+async def load_preset(preset_id: str):
+    if preset_id not in THEME_PRESETS:
+        raise HTTPException(status_code=404, detail=f"Unknown preset '{preset_id}'")
+    updated = thematic_coder.set_preset(preset_id)
+    return {"ok": True, "preset": preset_id, "themes": updated}
+
+
 @app.post("/api/parse")
 @app.post("/api/upload")
-async def upload_file(file: UploadFile = File(...)):
-    """Ingest and parse an uploaded file (.csv, .xlsx, .json, .xml, .txt)."""
+async def upload_file(request: Request):
+    """Ingest and parse single or multiple uploaded files (.csv, .xlsx, .json, .xml, .txt, .docx)."""
     try:
-        content = await file.read(10_000_001)
-        if not content:
-            raise HTTPException(status_code=400, detail="Uploaded file is empty.")
-        if len(content) > 10_000_000:
-            raise HTTPException(status_code=413, detail="Files must be 10 MB or smaller.")
-        parsed = parse_uploaded_file(file.filename or "uploaded.csv", content)
+        form = await request.form()
+        uploaded_files = []
+        for _, val in form.multi_items():
+            if hasattr(val, "read") and hasattr(val, "filename"):
+                uploaded_files.append(val)
+
+        if not uploaded_files:
+            raise HTTPException(status_code=400, detail="No files uploaded.")
+
+        file_items: List[Tuple[str, bytes]] = []
+        for uf in uploaded_files:
+            content = await uf.read(10_000_001)
+            if not content:
+                continue
+            if len(content) > 10_000_000:
+                raise HTTPException(status_code=413, detail=f"File '{uf.filename}' exceeds 10 MB limit.")
+            file_items.append((uf.filename or "uploaded.docx", content))
+
+        if not file_items:
+            raise HTTPException(status_code=400, detail="Uploaded file(s) are empty.")
+
+        if len(file_items) == 1:
+            parsed = parse_uploaded_file(file_items[0][0], file_items[0][1])
+        else:
+            parsed = parse_multiple_uploaded_files(file_items)
+
         if len(parsed["records"]) > 5000:
             raise HTTPException(status_code=413, detail="Datasets are limited to 5,000 records per analysis.")
         return {"ok": True, "data": parsed}
@@ -123,6 +181,7 @@ async def upload_file(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Failed to parse file: {exc}")
+
 
 
 @app.post("/api/analyze")

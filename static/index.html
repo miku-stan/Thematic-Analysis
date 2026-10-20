@@ -10,22 +10,30 @@
   <!-- Topbar -->
   <header class="topbar">
     <div class="brand-group">
-      <div class="brand-icon">DB</div>
+      <div class="brand-icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
       <div>
         <div class="brand-title">
-          DistilBERT Thematic Analysis Studio
+          SGLG Local Governance Thematic Studio
           <span id="modelStatusPill" class="status-pill">
             <span class="status-dot"></span>
             <span id="modelStatusText">Loading ONNX Engine...</span>
           </span>
         </div>
         <div class="brand-subtitle" id="modelArchSubtitle">
-          6-Layer Transformer Sequence Classifier + Multi-Format Thematic Coding &amp; TF-IDF Discovery Engine
+          Qualitative Thematic Analysis &amp; DistilBERT Inference Engine · Study 3 (Moving Beyond Paper Compliance)
         </div>
       </div>
     </div>
 
     <div class="topbar-actions">
+      <button class="btn btn-secondary btn-sm" onclick="loadSampleDataset('csv')" id="topbarSampleBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Load Teacher's SGLG Dataset
+      </button>
       <button class="btn btn-primary btn-sm" onclick="triggerFileInput()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         Upload Dataset
@@ -100,16 +108,17 @@
                   <line x1="12" y1="3" x2="12" y2="15"/>
                 </svg>
               </div>
-              <div class="dropzone-title">Drag &amp; drop your dataset file here, or click to browse</div>
-              <div class="dropzone-sub">Upload CSV, Excel, XML, JSON, or Plain-text files (up to 10 MB and 5,000 records)</div>
+              <div class="dropzone-title">Drag &amp; drop your dataset file(s) here, or click to browse</div>
+              <div class="dropzone-sub">Upload Word transcripts (.docx), CSV, Excel, XML, JSON, or Plain-text files (supports multi-file selection, up to 10 MB and 5,000 records)</div>
               <div class="format-badges">
+                <span class="format-badge" style="border-color:var(--accent); color:var(--accent); font-weight:700;">Word Transcripts (.docx)</span>
                 <span class="format-badge">CSV (.csv)</span>
                 <span class="format-badge">Excel (.xlsx)</span>
                 <span class="format-badge">XML (.xml)</span>
                 <span class="format-badge">JSON (.json)</span>
                 <span class="format-badge">Plain Text (.txt)</span>
               </div>
-              <input id="fileInput" type="file" accept=".csv,.xlsx,.json,.xml,.txt" style="display:none" onchange="handleFileSelect(event)" />
+              <input id="fileInput" type="file" accept=".csv,.xlsx,.json,.xml,.txt,.docx" multiple style="display:none" onchange="handleFileSelect(event)" />
             </div>
 
             <!-- Uploaded File Preview & Field Mapper -->
@@ -224,12 +233,12 @@
         </div>
       </div>
 
-      <!-- Qualitative Synthesis Insights -->
-      <div class="card">
+      <!-- Qualitative Synthesis & Framework Banner -->
+      <div class="card sglg-banner-card">
         <div class="card-header">
           <div>
-            <div class="card-title">Automated Thematic Synthesis &amp; Research Findings</div>
-            <div class="card-subtitle">Generated from DistilBERT sequence classifications and thematic codebook frequencies</div>
+            <div class="card-title">Study 3 Thematic Framework &amp; Academic Synthesis</div>
+            <div class="card-subtitle">Seal of Good Local Governance (SGLG) Qualitative Findings &amp; Core Analytical Benchmarks</div>
           </div>
           <div style="display:flex; gap:6px; flex-wrap:wrap;">
             <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('csv')">Export .CSV</button>
@@ -239,7 +248,49 @@
           </div>
         </div>
         <div class="card-body">
-          <div id="insightsContainer" class="insights-list"></div>
+          <div class="framework-guidelines-grid">
+            <div class="framework-guide-box">
+              <div class="guide-tag">Theme 4 · Central Analytic Benchmark</div>
+              <p class="guide-quote">“The strongest evidence of institutionalization was not the volume of documentation prepared for assessment, but the continuation of governance practices as part of regular administrative and service-delivery routines.”</p>
+            </div>
+            <div class="framework-guide-box">
+              <div class="guide-tag">Theme 6 · Culminating Conclusion</div>
+              <p class="guide-quote">“Across cases, sustainable SGLG performance was distinguished from documentary compliance by the extent to which governance practices were institutionalized, owned by responsible offices, continuously monitored, and maintained outside the formal assessment cycle.”</p>
+            </div>
+            <div class="framework-guide-box">
+              <div class="guide-tag">Theme 1 · Suggested Academic Sequence</div>
+              <p class="guide-text"><strong>1.</strong> State dominant pattern &rarr; <strong>2.</strong> Show supporting cases/stakeholders &rarr; <strong>3.</strong> Present short de-identified quotations (e.g. <em>LCE-03</em>) &rarr; <strong>4.</strong> Identify contrasting cases &rarr; <strong>5.</strong> Interpret for sustained SGLG performance.</p>
+            </div>
+          </div>
+
+          <div id="insightsContainer" class="insights-list" style="margin-top:16px;"></div>
+        </div>
+      </div>
+
+      <!-- Theme 3 Cross-Case Operational Barriers Matrix -->
+      <div class="card" id="operationalMatrixCard">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Theme 3: Cross-Case Operational Barriers Comparison Matrix</div>
+            <div class="card-subtitle">Comparative assessment of operational issues and technical bottlenecks across LGU-01, LGU-02, and LGU-03</div>
+          </div>
+          <span class="status-badge" style="background:var(--accent-soft); color:var(--accent); font-weight:700;">Cross-Case Comparative Matrix</span>
+        </div>
+        <div class="card-body">
+          <div class="table-wrap">
+            <table class="data-table" id="crossCaseMatrixTable">
+              <thead id="crossCaseMatrixHead">
+                <tr>
+                  <th style="min-width:180px;">Operational Issue</th>
+                  <th style="min-width:200px;">LGU-01</th>
+                  <th style="min-width:200px;">LGU-02</th>
+                  <th style="min-width:200px;">LGU-03</th>
+                  <th style="min-width:240px;">Cross-Case Interpretation</th>
+                </tr>
+              </thead>
+              <tbody id="crossCaseMatrixBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -381,7 +432,11 @@
               <div class="card-title">Customizable Thematic Codebook</div>
               <div class="card-subtitle">Modify existing themes, add new custom themes, or edit seed keywords and re-run coding</div>
             </div>
-            <div style="display:flex; gap:8px;">
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <select id="codebookPresetSelect" class="select" style="padding:5px 10px; font-size:0.82rem; max-width:270px;" onchange="handlePresetSelect(this.value)">
+                <option value="sglg_governance" selected>Teacher's SGLG Study (6 Themes)</option>
+                <option value="alumni_tracer">Alumni Tracer Study (8 Themes)</option>
+              </select>
               <button class="btn btn-secondary btn-sm" onclick="resetCodebookThemes()">Reset Defaults</button>
               <button class="btn btn-secondary btn-sm" onclick="addNewThemeCard()">+ Add Custom Theme</button>
               <button class="btn btn-primary btn-sm" onclick="saveAndReanalyzeThemes()">Save &amp; Re-Analyze Corpus</button>

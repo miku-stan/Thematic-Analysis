@@ -738,5 +738,21 @@ body {
 .spec-grid small { color:var(--text-muted); }
 .spec-grid strong { overflow-wrap:anywhere; }
 .model-warning { color:var(--amber); margin-top:14px; }
+
+/* SGLG Framework & Banner Cards */
+.sglg-banner-card { border-left: 4px solid var(--accent); }
+.framework-guidelines-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.framework-guide-box { background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.guide-tag { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); }
+.guide-quote { font-size: 0.84rem; line-height: 1.45; color: var(--text-primary); font-style: italic; }
+.guide-text { font-size: 0.82rem; line-height: 1.45; color: var(--text-secondary); }
+.subtheme-wrapper { margin: 8px 0; }
+.subtheme-label { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; }
+.subtheme-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.subtheme-chip { font-size: 0.73rem; padding: 2px 8px; border-radius: 999px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-secondary); }
+.theme-meta-note, .theme-meta-quote, .theme-meta-bench { font-size: 0.76rem; padding: 6px 10px; background: var(--bg-secondary); border-radius: var(--radius-sm); border-left: 3px solid var(--cyan); margin-top: 6px; color: var(--text-secondary); }
+.theme-meta-quote { border-left-color: var(--accent); }
+.theme-meta-bench { border-left-color: var(--emerald); }
+
 @media (max-width:900px) { .records-filters { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:600px) { .container { padding:14px 12px 40px; } .topbar { padding:12px; } .records-filters,.inspector-grid { grid-template-columns:1fr; } .card-body { padding:14px; } .spec-grid { grid-template-columns:1fr; } }

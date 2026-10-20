@@ -5,21 +5,40 @@ import io
 import json
 import re
 import xml.etree.ElementTree as ET
+import zipfile
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
 
 COLUMN_ALIASES: Dict[str, List[str]] = {
-    "full_name": ["full_name", "fullname", "name", "respondent", "student_name", "author", "id", "respondent_id", "participant", "user_id"],
-    "headline": ["headline", "title", "profile_headline", "tagline", "summary_title"],
-    "current_position": ["current_position", "position", "job_title", "role", "current_role", "occupation", "designation"],
-    "current_company": ["current_company", "company", "employer", "organization", "institution", "workplace"],
-    "degree_program": ["degree_program", "degree", "course", "program", "major", "specialization", "education"],
-    "skills": ["skills", "technical_skills", "competencies", "technologies", "tags", "keywords"],
+    "full_name": [
+        "participant_id", "respondent_id", "case_id", "stakeholder_id", "case", "respondent",
+        "participant", "lce_code", "full_name", "fullname", "name", "student_name", "author", "id", "user_id"
+    ],
+    "headline": [
+        "subtheme", "theme_heading", "finding", "headline", "title", "profile_headline", "tagline", "summary_title"
+    ],
+    "current_position": [
+        "office_role", "governance_role", "designation", "office", "department", "position",
+        "current_position", "job_title", "role", "current_role", "occupation"
+    ],
+    "current_company": [
+        "lgu", "municipality", "city", "province", "agency", "current_company", "company",
+        "employer", "organization", "institution", "workplace"
+    ],
+    "degree_program": [
+        "governance_area", "sglg_area", "pillar", "assessment_area", "degree_program",
+        "degree", "course", "program", "major", "specialization", "education"
+    ],
+    "skills": [
+        "skills_indicators", "indicators", "operational_issue", "subthemes", "skills",
+        "technical_skills", "competencies", "technologies", "tags", "keywords"
+    ],
     "about": [
-        "about", "bio", "response", "feedback", "comment", "narrative", "text",
-        "description", "open_ended", "reflection", "experience_summary", "input_text", "statement",
+        "narrative_quote", "quotation", "quote", "excerpt", "interview_transcript", "findings",
+        "observation", "statement", "about", "bio", "response", "feedback", "comment", "narrative",
+        "text", "description", "open_ended", "reflection", "experience_summary", "input_text"
     ],
 }
 
@@ -46,7 +65,7 @@ def auto_detect_mapping(columns: List[str]) -> Dict[str, str]:
 
 
 def parse_uploaded_file(filename: str, content: bytes) -> Dict[str, Any]:
-    """Parse uploaded file bytes (.csv, .xlsx, .json, .xml, .txt) into structured rows."""
+    """Parse uploaded file bytes (.csv, .xlsx, .json, .xml, .txt, .docx) into structured rows."""
     ext = (filename or "").lower().rsplit(".", 1)[-1] if "." in (filename or "") else ""
 
     if ext == "csv":
@@ -64,9 +83,12 @@ def parse_uploaded_file(filename: str, content: bytes) -> Dict[str, Any]:
     elif ext in ("txt", "md", "log"):
         records, columns = _parse_txt(content)
         file_type = "Plain Text (.txt)"
+    elif ext == "docx":
+        records, columns = _parse_docx(content, filename=filename)
+        file_type = "Word Transcript (.docx)"
     else:
         raise ValueError(
-            f"Unsupported file extension '.{ext}'. Supported formats: .csv, .xlsx, .json, .xml, .txt"
+            f"Unsupported file extension '.{ext}'. Supported formats: .csv, .xlsx, .json, .xml, .txt, .docx"
         )
 
     suggested_mapping = auto_detect_mapping(columns)
@@ -79,6 +101,41 @@ def parse_uploaded_file(filename: str, content: bytes) -> Dict[str, Any]:
         "preview_rows": records[:10],
         "records": records,
     }
+
+
+def parse_multiple_uploaded_files(file_items: List[Tuple[str, bytes]]) -> Dict[str, Any]:
+    """Parse multiple uploaded files (e.g. multiple .docx transcripts) and merge into a unified dataset."""
+    if not file_items:
+        raise ValueError("No files provided for multi-file upload.")
+
+    if len(file_items) == 1:
+        return parse_uploaded_file(file_items[0][0], file_items[0][1])
+
+    all_records: List[Dict[str, Any]] = []
+    seen_columns: List[str] = []
+    file_names: List[str] = []
+
+    for fname, content in file_items:
+        parsed = parse_uploaded_file(fname, content)
+        file_names.append(fname)
+        for col in parsed.get("columns", []):
+            if col not in seen_columns:
+                seen_columns.append(col)
+        all_records.extend(parsed.get("records", []))
+
+    suggested_mapping = auto_detect_mapping(seen_columns)
+    combined_name = f"Multi-Case Transcripts ({len(file_items)} files: {', '.join(file_names[:3])}{'...' if len(file_names) > 3 else ''})"
+
+    return {
+        "filename": combined_name,
+        "file_type": f"Multi-File ({len(file_items)} transcripts)",
+        "total_rows": len(all_records),
+        "columns": seen_columns,
+        "suggested_mapping": suggested_mapping,
+        "preview_rows": all_records[:10],
+        "records": all_records,
+    }
+
 
 
 def _clean_val(val: Any) -> str:
@@ -267,6 +324,188 @@ def _parse_txt(content: bytes) -> Tuple[List[Dict[str, Any]], List[str]]:
     return records, ["full_name", "response"]
 
 
+def _extract_indicators(text: str) -> str:
+    """Extract salient qualitative governance keywords/indicators from an interview excerpt."""
+    lower = text.lower()
+    candidates = [
+        "documentation", "records", "budget", "funding", "accessibility", "ordinance",
+        "coordination", "focal person", "dilg", "technical assistance", "institutionalization",
+        "biometrics", "monitoring", "capacity", "turnover", "plantilla", "service delivery"
+    ]
+    found = [c for c in candidates if c in lower]
+    return ", ".join(found) if found else "sglg governance"
+
+
+def _parse_docx(content: bytes, filename: str = "") -> Tuple[List[Dict[str, Any]], List[str]]:
+    """Parse Microsoft Word (.docx) interview transcript into speaker turns and qualitative records."""
+    try:
+        with zipfile.ZipFile(io.BytesIO(content)) as z:
+            xml_content = z.read("word/document.xml")
+    except Exception as exc:
+        raise ValueError(f"Unable to read .docx archive: {exc}")
+
+    namespaces = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+    try:
+        root = ET.fromstring(xml_content)
+    except Exception as exc:
+        raise ValueError(f"Unable to parse document XML in .docx: {exc}")
+
+    paras: List[str] = []
+    for p in root.iterfind(".//w:p", namespaces):
+        t = "".join([n.text for n in p.iterfind(".//w:t", namespaces) if n.text]).strip()
+        if t:
+            paras.append(t)
+
+    fname_lower = (filename or "").lower()
+
+    # Determine municipality and case code
+    if "ambaguio" in fname_lower:
+        lgu_name = "Ambaguio"
+        case_code = "LGU-01"
+    elif "penablanca" in fname_lower:
+        lgu_name = "Peñablanca"
+        case_code = "LGU-02"
+    else:
+        # Check in body text
+        joined_lower = " ".join(paras[:10]).lower()
+        if "ambaguio" in joined_lower:
+            lgu_name = "Ambaguio"
+            case_code = "LGU-01"
+        elif "penablanca" in joined_lower or "peñablanca" in joined_lower:
+            lgu_name = "Peñablanca"
+            case_code = "LGU-02"
+        else:
+            lgu_name = "Municipality"
+            case_code = "LGU-01"
+
+    lgu_display = f"{lgu_name} ({case_code})"
+
+    if "mayor" in fname_lower:
+        default_role = "Local Chief Executive / Mayor"
+    elif "mlgoo" in fname_lower:
+        default_role = "MLGOO"
+    elif "focal" in fname_lower:
+        default_role = "SGLG Focal Person"
+    else:
+        default_role = "LGU Participant"
+
+    speaker_re = re.compile(
+        r"^(INTERVIEWER|Interviewer|Interviewer\s*\d*|Question\s*no\.?\s*\d+|-Question\s*no\.?\s*\d+|SGLG\s*FOCAL(?:\s*PERSON)?|SECTOR\s*LEADER|MLGOO|DILG\s*FOCAL(?:\s*PERSON)?|MAYOR|MAYORS|Local\s*Chief\s*Executives?|LCE)\s*[:\-]\s*(.*)",
+        re.IGNORECASE,
+    )
+
+    records: List[Dict[str, Any]] = []
+    current_speaker: Optional[str] = None
+    current_prompt = ""
+    current_response_paras: List[str] = []
+    in_question_mode = False
+    current_question_paras: List[str] = []
+
+    def flush_turn():
+        nonlocal current_response_paras, current_speaker, current_prompt
+        text = " ".join(current_response_paras).strip()
+        if text:
+            words = text.split()
+            # Filter brief filler turns (less than 15 words)
+            if len(words) >= 15:
+                spk_clean = (current_speaker or default_role).strip().title()
+                if "Mayor" in spk_clean:
+                    spk_clean = "Mayor / LCE"
+                elif "Mlgoo" in spk_clean:
+                    spk_clean = "MLGOO"
+                elif "Focal" in spk_clean:
+                    spk_clean = "SGLG Focal Person"
+                elif "Chief Executive" in spk_clean:
+                    spk_clean = "Local Chief Executive"
+                elif "Sector" in spk_clean:
+                    spk_clean = "Sector Leader"
+
+                turn_num = len(records) + 1
+                records.append({
+                    "participant_id": f"{lgu_name} - {spk_clean} (Turn #{turn_num})",
+                    "subtheme": current_prompt or f"Interview Excerpt #{turn_num}",
+                    "office_role": spk_clean,
+                    "lgu": lgu_display,
+                    "governance_area": "SGLG Local Governance Study 3",
+                    "skills_indicators": _extract_indicators(text),
+                    "narrative_quote": text,
+                })
+        current_response_paras = []
+
+    for p in paras:
+        m = speaker_re.match(p)
+        if m:
+            label = m.group(1).strip()
+            content = m.group(2).strip()
+
+            if any(k in label.lower() for k in ["interviewer", "question"]):
+                flush_turn()
+                in_question_mode = True
+                current_question_paras = [content] if content else []
+                current_speaker = None
+            else:
+                if in_question_mode:
+                    current_prompt = " ".join(current_question_paras).strip()
+                    in_question_mode = False
+                    current_question_paras = []
+                else:
+                    flush_turn()
+                current_speaker = label
+                current_response_paras = [content] if content else []
+        else:
+            if in_question_mode:
+                is_answer_start = re.match(
+                    r"^(I\s+believe|For\s+me|Siguro|Sa\s+tingin|Unang\s+una|Actually|Meron|Wala|Nung|Noong)\b",
+                    p,
+                    re.IGNORECASE,
+                )
+                if is_answer_start and len(current_question_paras) > 0:
+                    current_prompt = " ".join(current_question_paras).strip()
+                    in_question_mode = False
+                    current_question_paras = []
+                    current_speaker = default_role
+                    current_response_paras = [p]
+                else:
+                    current_question_paras.append(p)
+            else:
+                if current_speaker is None:
+                    if re.match(r"^(Thank\s+you|Maraming\s+salamat|Salamat|Ok\s+po)\b", p, re.IGNORECASE):
+                        in_question_mode = True
+                        current_question_paras = [p]
+                    else:
+                        current_speaker = default_role
+                        current_response_paras.append(p)
+                else:
+                    current_response_paras.append(p)
+
+    flush_turn()
+
+    # Fallback if no speaker turns detected (e.g. standard non-interview docx)
+    if not records:
+        for idx, p in enumerate(paras):
+            if len(p.split()) >= 8:
+                records.append({
+                    "participant_id": f"{lgu_name} - Excerpt #{idx + 1}",
+                    "subtheme": "Transcript Excerpt",
+                    "office_role": default_role,
+                    "lgu": lgu_display,
+                    "governance_area": "SGLG Local Governance Study 3",
+                    "skills_indicators": _extract_indicators(p),
+                    "narrative_quote": p,
+                })
+
+    columns = [
+        "participant_id",
+        "subtheme",
+        "office_role",
+        "lgu",
+        "governance_area",
+        "skills_indicators",
+        "narrative_quote",
+    ]
+    return records, columns
+
+
 def _decode_bytes(content: bytes) -> str:
     for encoding in ("utf-8-sig", "utf-8", "cp1252", "latin-1"):
         try:
@@ -361,6 +600,11 @@ def export_results(analysis_result: Dict[str, Any], fmt: str = "csv") -> Tuple[b
             df_records.to_excel(writer, index=False, sheet_name="Coded_Records")
             df_themes.to_excel(writer, index=False, sheet_name="Theme_Distribution")
             df_summary.to_excel(writer, index=False, sheet_name="Executive_Summary")
+            cross_case = analysis_result.get("cross_case_matrix")
+            if cross_case:
+                matrix_rows = cross_case.get("rows") if isinstance(cross_case, dict) else cross_case
+                if matrix_rows:
+                    pd.DataFrame(matrix_rows).to_excel(writer, index=False, sheet_name="Cross_Case_Matrix")
         return (
             output.getvalue(),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

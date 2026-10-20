@@ -41,7 +41,7 @@ def run():
         page.locator("#uploadedFileName").get_by_text("sample_thematic_dataset.xml").wait_for()
         page.locator(".nav-tab[data-tab='codebook']").click()
         page.get_by_role("button", name="+ Add Custom Theme").click()
-        assert page.locator(".theme-editor").count() == 9
+        assert page.locator(".theme-editor").count() == 7
         page.set_viewport_size({"width": 390, "height": 844})
         page.locator(".nav-tab[data-tab='dashboard']").click()
         assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")

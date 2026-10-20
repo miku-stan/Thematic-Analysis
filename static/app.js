@@ -73,17 +73,22 @@ window.clearUploadedFile = function () {
   $('fileInput').value = '';
   $('uploadPreviewBox').style.display = 'none';
 };
-async function upload(file) {
-  if (!file) return;
+async function upload(files) {
+  if (!files) return;
+  const fileList = files instanceof FileList || Array.isArray(files) ? Array.from(files) : [files];
+  if (!fileList.length || !fileList[0]) return;
   try {
     setBusy(true);
-    const form = new FormData(); form.append('file', file);
-    const body = await api('/api/parse', { method: 'POST', body: form });
+    const form = new FormData();
+    for (const f of fileList) {
+      form.append('file', f);
+    }
+    const body = await api('/api/upload', { method: 'POST', body: form });
     showParsed(body.data);
   } catch (error) { notify(error.message, true); }
   finally { setBusy(false); }
 }
-window.handleFileSelect = event => upload(event.target.files?.[0]);
+window.handleFileSelect = event => upload(event.target.files);
 
 function params() { return { use_hybrid_rules: $('useHybridRulesCheckbox').checked, n_clusters: Number($('clusterCountSelect').value) }; }
 async function analyze(payload) {
@@ -119,8 +124,29 @@ function renderAll() {
   $('kpiMeanConfidence').textContent = `${number(summary.mean_confidence_pct)}%`;
   $('kpiAvgLatency').textContent = `${number(summary.avg_latency_ms, 2)} ms`;
   $('insightsContainer').innerHTML = analysis.qualitative_insights.map(item => `<div class="insight-item">${esc(item)}</div>`).join('');
+  if ($('crossCaseMatrixBody')) {
+    const rawMatrix = analysis.cross_case_matrix || [];
+    const cases = rawMatrix.cases || [
+      { id: 'lgu_01', name: 'LGU-01' },
+      { id: 'lgu_02', name: 'LGU-02' },
+      { id: 'lgu_03', name: 'LGU-03' }
+    ];
+    const rows = rawMatrix.rows || (Array.isArray(rawMatrix) ? rawMatrix : []);
+    if ($('crossCaseMatrixHead')) {
+      $('crossCaseMatrixHead').innerHTML = `<tr>
+        <th style="min-width:180px;">Operational Issue</th>
+        ${cases.map(c => `<th style="min-width:200px;">${esc(c.name)}</th>`).join('')}
+        <th style="min-width:240px;">Cross-Case Interpretation</th>
+      </tr>`;
+    }
+    $('crossCaseMatrixBody').innerHTML = rows.map(m => `<tr>
+      <td><strong style="color:var(--text-primary);">${esc(m.issue)}</strong></td>
+      ${cases.map(c => `<td style="font-size:0.83rem; color:var(--text-secondary);">${esc(m[c.id] || m[c.name] || '—')}</td>`).join('')}
+      <td style="font-size:0.83rem; color:var(--accent);">${esc(m.interpretation)}</td>
+    </tr>`).join('') || '<tr><td colspan="5">No cross-case matrix available.</td></tr>';
+  }
   $('themeDistributionChart').innerHTML = analysis.theme_distribution.map(theme => `<div class="theme-bar-row"><div class="theme-bar-top"><span>${esc(theme.theme)}</span><span>${theme.count} · ${number(theme.percentage)}%</span></div><div class="theme-bar-track"><div class="theme-bar-fill" style="width:${Math.min(100, theme.percentage)}%;background:${esc(theme.color)}"></div></div><div class="theme-kw-pills">${(theme.top_keywords || []).slice(0, 5).map(k => `<span class="kw-pill">${esc(k.term)}</span>`).join('')}</div></div>`).join('') || '<p>No themes detected.</p>';
-  $('crossTabTable').querySelector('tbody').innerHTML = analysis.theme_distribution.map(t => `<tr><td>${esc(t.theme)}</td><td>${t.count}</td><td>${t.employed}</td><td>${t.underemployed}</td><td>${t.unemployed}</td><td>${t.count ? number(t.employed / t.count * 100, 0) : 0}% employed</td></tr>`).join('');
+  $('crossTabTable').querySelector('tbody').innerHTML = analysis.theme_distribution.map(t => `<tr><td>${esc(t.theme)}</td><td>${t.count}</td><td>${t.employed}</td><td>${t.underemployed}</td><td>${t.unemployed}</td><td>${t.count ? number(t.employed / t.count * 100, 0) : 0}% aligned</td></tr>`).join('');
   $('emergentClustersContainer').innerHTML = (analysis.emergent_clusters || []).map(c => `<div class="cluster-item"><strong>${esc(c.label)}</strong><span>${c.size} records · ${esc(c.dominant_outcome)}</span><small>${esc((c.top_terms || []).join(' · '))}</small></div>`).join('') || '<p>At least three substantive records are needed for clustering.</p>';
   $('globalKeyphrasesContainer').innerHTML = `<div class="theme-kw-pills">${(analysis.global_tfidf_keyphrases || []).map(k => `<span class="kw-pill">${esc(k.term)} <b>${number(k.weight, 2)}</b></span>`).join('')}</div><h4>Matched codebook phrases</h4><div class="theme-kw-pills">${(analysis.top_matched_codes || []).map(k => `<span class="kw-pill">${esc(k.code)} (${k.count})</span>`).join('')}</div>`;
   updateFilters(); renderRecordsTable();
@@ -154,7 +180,7 @@ window.openInspector = function (rowIndex) {
   $('modalRecordTitle').textContent = `${row.identifier} · Deep Inspector`;
   const probabilities = Object.entries(row.probabilities || {}).map(([label, probability]) => `<div class="probability-row"><span>${esc(label)}</span><div class="theme-bar-track"><div class="theme-bar-fill" style="width:${probability * 100}%;background:var(--accent)"></div></div><b>${number(probability * 100)}%</b></div>`).join('');
   const tokens = (row.tokens_preview || []).map((token, i) => `<span class="token-chip ${token.startsWith('[') ? 'special' : ''}">${esc(token)}<span class="token-id">${esc(row.token_ids_preview?.[i])}</span></span>`).join('');
-  $('modalInspectorBody').innerHTML = `<div class="inspector-grid"><div><h4>Standardized input</h4><p class="inspector-text">${esc(row.input_text)}</p><h4>Model output</h4><p>Predicted: <strong>${esc(row.distilbert_label)}</strong> · Final: <strong>${esc(row.final_status)}</strong>${row.hybrid_override ? ' · Hybrid adjustment' : ''}</p><p>Raw logits: ${esc((row.logits || []).join(' · '))}</p>${probabilities}<p>${row.token_count} tokens · ${number(row.latency_ms, 2)} ms</p></div><div><h4>Thematic coding</h4><p>Primary: <strong>${esc(row.primary_theme)}</strong></p><p>Secondary: ${esc(row.secondary_theme || 'None')}</p><p>Matched: ${esc((row.matched_codes || []).join(', ') || 'None')}</p><p>Degree alignment: ${esc(row.alignment?.reason || 'Unknown')}</p><label class="form-label" for="manualThemeSelect">Manual theme override</label><select id="manualThemeSelect" class="select">${state.themes.map(t => `<option value="${esc(t.id)}" ${row.primary_theme_id === t.id ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select><button class="btn btn-primary btn-sm" onclick="applyThemeOverride(${row.row_index})">Apply override</button></div></div><h4>WordPiece token preview</h4><div class="token-list">${tokens}</div>`;
+  $('modalInspectorBody').innerHTML = `<div class="inspector-grid"><div><h4>Standardized qualitative input</h4><p class="inspector-text">${esc(row.input_text)}</p><h4>DistilBERT sequence output</h4><p>Predicted: <strong>${esc(row.distilbert_label)}</strong> · Status: <strong>${esc(row.final_status)}</strong>${row.hybrid_override ? ' · Hybrid rule active' : ''}</p><p>Raw logits: ${esc((row.logits || []).join(' · '))}</p>${probabilities}<p>${row.token_count} tokens · ${number(row.latency_ms, 2)} ms</p></div><div><h4>Thematic coding</h4><p>Primary: <strong>${esc(row.primary_theme)}</strong></p><p>Secondary: ${esc(row.secondary_theme || 'None')}</p><p>Matched codes: ${esc((row.matched_codes || []).join(', ') || 'None')}</p><p>Governance trajectory tone: <strong>${esc(row.trajectory_tone || 'Standard')}</strong></p><label class="form-label" for="manualThemeSelect">Manual theme override</label><select id="manualThemeSelect" class="select">${state.themes.map(t => `<option value="${esc(t.id)}" ${row.primary_theme_id === t.id ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select><button class="btn btn-primary btn-sm" onclick="applyThemeOverride(${row.row_index})">Apply override</button></div></div><h4>WordPiece subword token preview</h4><div class="token-list">${tokens}</div>`;
   $('inspectorModal').classList.add('open');
 };
 window.closeInspectorModal = function () { $('inspectorModal').classList.remove('open'); };
@@ -177,7 +203,7 @@ function rebuildThemeSummary() {
   }
   analysis.theme_distribution = [...counts.values()].sort((a, b) => b.count - a.count).map(t => ({ ...t, percentage: Number((t.count / rows.length * 100).toFixed(1)) }));
   analysis.summary.dominant_theme = analysis.theme_distribution[0]?.theme || 'None';
-  analysis.qualitative_insights[0] = `Dominant theme: ${analysis.summary.dominant_theme} (${analysis.theme_distribution[0]?.count || 0} of ${rows.length} records). Manual overrides are included.`;
+  analysis.qualitative_insights[0] = `Dominant pattern: ${analysis.summary.dominant_theme} (${analysis.theme_distribution[0]?.count || 0} of ${rows.length} records). Manual overrides included.`;
 }
 
 window.exportAnalysis = async function (format) {
@@ -187,33 +213,97 @@ window.exportAnalysis = async function (format) {
     if (!response.ok) { const body = await response.json(); throw new Error(body.detail || 'Export failed'); }
     const blob = await response.blob();
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob); link.download = `distilbert_thematic_analysis.${format}`;
+    link.href = URL.createObjectURL(blob); link.download = `sglg_thematic_analysis.${format}`;
     link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   } catch (error) { notify(error.message, true); }
 };
+
+window.loadSampleDataset = async function (format = 'csv') {
+  try {
+    setBusy(true);
+    const body = await api(`/api/samples/${format}`);
+    showParsed(body.data);
+    await runUploadedFileAnalysis();
+    notify("Loaded and analyzed Teacher's SGLG Dataset (18 records across 3 LGU cases).");
+  } catch (error) { notify(error.message, true); }
+  finally { setBusy(false); }
+};
+
+window.handlePresetSelect = async function (presetId) {
+  try {
+    setBusy(true);
+    const body = await api(`/api/presets/${presetId}`, { method: 'POST' });
+    state.themes = body.themes;
+    renderThemes();
+    notify(`Switched codebook preset to '${presetId === 'sglg_governance' ? "Teacher's SGLG Governance Study" : 'Alumni Career Tracer'}'`);
+    if (state.lastRequest) await analyze(state.lastRequest);
+  } catch (error) { notify(error.message, true); }
+  finally { setBusy(false); }
+};
+
 function renderThemes() {
-  $('codebookEditorContainer').innerHTML = state.themes.map((theme, index) => `<div class="theme-editor" data-index="${index}"><div class="theme-editor-head"><input class="input theme-name" aria-label="Theme name" value="${esc(theme.name)}"><input class="theme-color" aria-label="Theme color" type="color" value="${esc(theme.color)}"><button class="btn btn-secondary btn-sm" onclick="removeThemeCard(${index})">Remove</button></div><label class="form-label">Description<input class="input theme-description" value="${esc(theme.description)}"></label><label class="form-label">Keywords (comma separated)<textarea class="textarea theme-keywords">${esc((theme.keywords || []).join(', '))}</textarea></label></div>`).join('');
+  $('codebookEditorContainer').innerHTML = state.themes.map((theme, index) => {
+    const subthemeTags = (theme.subthemes || []).map(s => `<span class="subtheme-chip">${esc(s)}</span>`).join('');
+    const sequenceHtml = theme.writing_sequence ? `<div class="theme-meta-note"><strong>Sequence:</strong> ${esc(theme.writing_sequence)}</div>` : '';
+    const quoteHtml = theme.sample_quote ? `<div class="theme-meta-quote"><strong>Sample Quote:</strong> ${esc(theme.sample_quote)}</div>` : '';
+    const benchHtml = theme.suggested_analytic_statement ? `<div class="theme-meta-bench"><strong>Benchmark:</strong> “${esc(theme.suggested_analytic_statement)}”</div>` : '';
+    const conclHtml = theme.suggested_theme_conclusion ? `<div class="theme-meta-bench"><strong>Conclusion:</strong> “${esc(theme.suggested_theme_conclusion)}”</div>` : '';
+
+    return `
+      <div class="theme-editor" data-index="${index}">
+        <div class="theme-editor-head">
+          <input class="input theme-name" aria-label="Theme name" value="${esc(theme.name)}">
+          <input class="theme-color" aria-label="Theme color" type="color" value="${esc(theme.color)}">
+          <button class="btn btn-secondary btn-sm" onclick="removeThemeCard(${index})">Remove</button>
+        </div>
+        <label class="form-label">Theme Description
+          <textarea class="textarea theme-description" style="min-height:55px;">${esc(theme.description)}</textarea>
+        </label>
+        ${subthemeTags ? `<div class="subtheme-wrapper"><span class="subtheme-label">Subthemes &amp; Key Dimensions:</span><div class="subtheme-pills">${subthemeTags}</div></div>` : ''}
+        ${sequenceHtml}
+        ${quoteHtml}
+        ${benchHtml}
+        ${conclHtml}
+        <label class="form-label" style="margin-top:8px;">Seed Keywords (comma-separated for matching)
+          <textarea class="textarea theme-keywords">${esc((theme.keywords || []).join(', '))}</textarea>
+        </label>
+      </div>
+    `;
+  }).join('');
 }
+
 function collectThemes() {
-  return [...document.querySelectorAll('.theme-editor')].map((el, index) => ({
-    id: state.themes[index]?.id,
-    name: el.querySelector('.theme-name').value.trim(),
-    color: el.querySelector('.theme-color').value,
-    description: el.querySelector('.theme-description').value.trim(),
-    keywords: el.querySelector('.theme-keywords').value.split(',').map(s => s.trim()).filter(Boolean),
-  })).filter(t => t.name);
+  return [...document.querySelectorAll('.theme-editor')].map((el, index) => {
+    const prev = state.themes[index] || {};
+    return {
+      id: prev.id,
+      name: el.querySelector('.theme-name').value.trim(),
+      color: el.querySelector('.theme-color').value,
+      description: el.querySelector('.theme-description').value.trim(),
+      subthemes: prev.subthemes || [],
+      writing_sequence: prev.writing_sequence || '',
+      sample_quote: prev.sample_quote || '',
+      suggested_analytic_statement: prev.suggested_analytic_statement || '',
+      suggested_theme_conclusion: prev.suggested_theme_conclusion || '',
+      keywords: el.querySelector('.theme-keywords').value.split(',').map(s => s.trim()).filter(Boolean),
+    };
+  }).filter(t => t.name);
 }
 window.addNewThemeCard = function () {
   state.themes = collectThemes();
-  state.themes.push({ id: `custom_${Date.now()}`, name: 'New theme', color: '#14b8a6', description: '', keywords: [] });
+  state.themes.push({ id: `custom_${Date.now()}`, name: 'New Custom Theme', color: '#14b8a6', description: '', subthemes: [], keywords: [] });
   renderThemes();
 };
 window.removeThemeCard = function (index) {
   state.themes = collectThemes().filter((_, i) => i !== index); renderThemes();
 };
 window.resetCodebookThemes = async function () {
-  try { state.themes = (await api('/api/themes/reset', { method: 'POST' })).themes; renderThemes(); notify('Default themes restored.'); }
-  catch (error) { notify(error.message, true); }
+  try {
+    state.themes = (await api('/api/themes/reset', { method: 'POST' })).themes;
+    renderThemes();
+    if ($('codebookPresetSelect')) $('codebookPresetSelect').value = 'sglg_governance';
+    notify("Default Teacher's SGLG themes restored.");
+  } catch (error) { notify(error.message, true); }
 };
 window.saveAndReanalyzeThemes = async function () {
   try {
@@ -235,7 +325,7 @@ function renderModel(model) {
   $('modelSpecsContainer').innerHTML = `<div class="spec-grid">${entries.map(([label, value]) => `<div><small>${esc(label)}</small><strong>${esc(value)}</strong></div>`).join('')}</div>${model.load_error ? `<p class="model-warning">${esc(model.load_error)}</p>` : ''}`;
   $('modelStatusText').textContent = model.loaded ? (model.runtime.startsWith('ONNX') ? 'ONNX Engine Ready' : 'PyTorch Engine Ready') : 'Heuristic Fallback Active';
   $('modelStatusPill').classList.toggle('offline', !model.loaded);
-  $('modelArchSubtitle').textContent = model.loaded ? `${model.architecture} · ${model.model_size_mb} MB · ${model.runtime}` : 'Model unavailable · heuristic estimates only';
+  $('modelArchSubtitle').textContent = model.loaded ? `DistilBERT Transformer · ${model.model_size_mb} MB · Study 3 SGLG Qualitative Inference` : 'Model unavailable · heuristic estimates only';
 }
 
 async function initialize() {
@@ -243,10 +333,13 @@ async function initialize() {
   const dropzone = $('dropzone');
   for (const event of ['dragenter', 'dragover']) dropzone.addEventListener(event, e => { e.preventDefault(); dropzone.classList.add('dragover'); });
   for (const event of ['dragleave', 'drop']) dropzone.addEventListener(event, e => { e.preventDefault(); dropzone.classList.remove('dragover'); });
-  dropzone.addEventListener('drop', e => upload(e.dataTransfer.files?.[0]));
+  dropzone.addEventListener('drop', e => upload(e.dataTransfer.files));
   try {
     const status = await api('/api/status');
-    state.themes = status.themes; renderThemes(); renderModel(status.model);
+    state.themes = status.themes;
+    renderThemes();
+    renderModel(status.model);
+    if ($('codebookPresetSelect')) $('codebookPresetSelect').value = 'sglg_governance';
   } catch (error) {
     $('modelStatusText').textContent = 'Server unavailable';
     $('modelStatusPill').classList.add('offline');

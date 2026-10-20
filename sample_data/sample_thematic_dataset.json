@@ -1,59 +1,168 @@
 {
-  "dataset_name": "Thematic Survey & Text Corpus (JSON)",
+  "dataset_name": "SGLG Local Governance Thematic Study (Study 3)",
+  "study_title": "Moving Beyond Paper Compliance: Thematic Analysis of SGLG Sustained Governance",
   "records": [
     {
-      "full_name": "Rosel Mina",
-      "degree_program": "BS Computer Science (Data Mining)",
-      "headline": "Software Developer at Amdocs",
-      "current_position": "Software Developer",
-      "current_company": "Amdocs",
-      "skills": "Python, Java, Cloud Computing, NLP, Data Analysis, SQL",
-      "about": "Working on enterprise telecommunications backend microservices and automated data pipelines."
+      "participant_id": "LCE-03",
+      "lgu": "LGU-03",
+      "office_role": "Municipal Mayor",
+      "governance_area": "Executive Direction & Leadership",
+      "subtheme": "Leadership commitment and executive direction",
+      "skills_indicators": "Executive Order, Quarterly Self-Audit, Focal Team, Leadership Direction",
+      "narrative_quote": "We realized that cramming two weeks before the DILG table assessment always led to failed indicators. I issued an Executive Order mandating quarterly self-audits and designated permanent focal persons in every department."
     },
     {
-      "full_name": "Jake Ronian Quiming",
-      "degree_program": "BS Computer Science (Data Mining)",
-      "headline": "Data Analyst at Pru Life UK",
-      "current_position": "Data Analyst",
-      "current_company": "Pru Life UK",
-      "skills": "Data Analytics, PostgreSQL, Python, Power BI, Financial Analysis",
-      "about": "Building predictive analytics models and interactive dashboards for insurance portfolio analysis."
+      "participant_id": "LCE-01",
+      "lgu": "LGU-01",
+      "office_role": "Municipal Mayor",
+      "governance_area": "Sustained Public Service & Continuity",
+      "subtheme": "Continuation of practices outside formal assessment cycle",
+      "skills_indicators": "Visible Service Delivery, Year-Round Implementation, Community Impact",
+      "narrative_quote": "For us, passing SGLG is just a consequence of good governance. What truly matters is that our 24/7 disaster operation center and computerized procurement operate continuously even without an impending assessment."
     },
     {
-      "full_name": "Kaizen Magbanua",
-      "degree_program": "BS Computer Science",
-      "headline": "Customer Support Representative",
-      "current_position": "Support Representative",
-      "current_company": "Zamora Wholesaling",
-      "skills": "Customer Service, Microsoft Office, Data Entry, Online Support",
-      "about": "Handling customer inquiries, administrative paperwork, and inventory encoding."
+      "participant_id": "MPDC-02",
+      "lgu": "LGU-02",
+      "office_role": "Planning & Development Coordinator",
+      "governance_area": "Interdepartmental Coordination",
+      "subtheme": "Designated focal persons and committees",
+      "skills_indicators": "Focal Persons, Interdepartmental Coordination, Monitoring Committee, Shared Drive",
+      "narrative_quote": "Before, SGLG was seen as solely the MPDC's problem. When we created the interdepartmental monitoring committee with monthly tracking meetings, every department head became accountable for their own governance area."
     },
     {
-      "full_name": "Mikaela Mae De Guzman",
-      "degree_program": "BS Computer Science",
-      "headline": "Freelance Graphics Designer & Video Editor",
-      "current_position": "Freelance Graphics Designer",
-      "current_company": "Freelance",
-      "skills": "Adobe Premiere Pro, Photoshop, Figma, Canva, Video Post-Production",
-      "about": "Producing social media graphics, brand kits, and video content for digital marketing campaigns."
+      "participant_id": "MHRMO-01",
+      "lgu": "LGU-01",
+      "office_role": "HR Management Officer",
+      "governance_area": "Administrative & Operational Constraints",
+      "subtheme": "Documentation and records management, staffing turnover",
+      "skills_indicators": "Records Management, Documentation Backlog, Staffing Shortages, Turnover",
+      "narrative_quote": "Our biggest barrier was not lack of political will, but records management and staff turnover. When job order encoders left, the institutional memory vanished, leading to delays and documentary deficiencies."
     },
     {
-      "full_name": "Carl Rainier Manalili",
-      "degree_program": "BS Computer Science",
-      "headline": "Fresh BSCS Graduate | Open to Work",
-      "current_position": "",
-      "current_company": "",
-      "skills": "Python, React, SQL, JavaScript",
-      "about": "Actively seeking entry-level software engineering or data science opportunities."
+      "participant_id": "MLGOO-03",
+      "lgu": "LGU-03",
+      "office_role": "DILG Field Officer",
+      "governance_area": "Technical Assistance & Capacity Building",
+      "subtheme": "DILG coaching and orientation, pre-assessment",
+      "skills_indicators": "DILG Technical Assistance, DILG Coaching, Pre-Assessment, Technical Clarification",
+      "narrative_quote": "The DILG coaching sessions and mock table evaluations helped the LGU identify compliance gaps early, providing technical clarification on newly revised SGLG financial administration guidelines."
     },
     {
-      "full_name": "Roland Francisco III",
-      "degree_program": "BS Information Technology",
-      "headline": "Cloud & Network Security Administrator",
-      "current_position": "System Administrator",
-      "current_company": "Converge ICT",
-      "skills": "Linux, AWS, Cisco Networking, Cybersecurity, Firewall",
-      "about": "Maintaining cloud infrastructure security, VPN tunnels, and enterprise Linux servers."
+      "participant_id": "MBO-02",
+      "lgu": "LGU-02",
+      "office_role": "Municipal Budget Officer",
+      "governance_area": "Financial Administration & Continuity",
+      "subtheme": "Policies, ordinances, and routine reports",
+      "skills_indicators": "Local Ordinances, Standard Operating Procedures, SOPs, Year-Round Monitoring",
+      "narrative_quote": "The strongest evidence of institutionalization was not the volume of documentation prepared for assessment, but the continuation of governance practices as part of regular administrative and service-delivery routines."
+    },
+    {
+      "participant_id": "LCE-02",
+      "lgu": "LGU-02",
+      "office_role": "City Mayor",
+      "governance_area": "Executive Direction & Policy Reform",
+      "subtheme": "Concrete changes in policy, process, or practice",
+      "skills_indicators": "Leadership Commitment, Accountability Arrangements, Administrative Reform",
+      "narrative_quote": "Following our previous assessment gaps in disaster risk reduction, we restructured the MDRRMO into a full department with dedicated plantilla positions and institutional accountability."
+    },
+    {
+      "participant_id": "BAC-SEC-01",
+      "lgu": "LGU-01",
+      "office_role": "Bids & Awards Committee Secretariat",
+      "governance_area": "Shared Information Systems",
+      "subtheme": "Shared documentation or information systems",
+      "skills_indicators": "Shared Documentation, Information Systems, Escalation of Unresolved Issues",
+      "narrative_quote": "We migrated all procurement records and posting requirements to a centralized shared information system so that focal persons can review compliance status in real-time."
+    },
+    {
+      "participant_id": "MDRRMO-03",
+      "lgu": "LGU-03",
+      "office_role": "Disaster Risk Reduction Officer",
+      "governance_area": "Resource Constraints & Budget",
+      "subtheme": "Budget, resources, and technical capacity",
+      "skills_indicators": "Budget Constraints, Limited Resources, Technical Expertise, Last-Minute Compliance",
+      "narrative_quote": "Being a 4th-class municipality, budget constraints and lack of technical expertise in formulating early warning systems caused severe delays during our initial SGLG compliance rush."
+    },
+    {
+      "participant_id": "MSWDO-01",
+      "lgu": "LGU-01",
+      "office_role": "Social Welfare Officer",
+      "governance_area": "Institutional Memory & Codification",
+      "subtheme": "Institutional memory and routine reports",
+      "skills_indicators": "Institutional Memory, Standard Operating Procedures, SOPs, Routine Governance",
+      "narrative_quote": "We codified our child and gender development programs into municipal standard operating procedures and ordinances so that services continue uninterrupted even during mayoral transitions."
+    },
+    {
+      "participant_id": "MPDC-01",
+      "lgu": "LGU-01",
+      "office_role": "Planning Coordinator",
+      "governance_area": "DILG Support & Recurring Gaps",
+      "subtheme": "Feedback, coaching, and recurring capacity gaps",
+      "skills_indicators": "DILG Support, Feedback, Technical Clarification, Capacity Building",
+      "narrative_quote": "While DILG technical assistance provided timely coaching and feedback, recurring documentation problems persisted in engineering due to lack of licensed building inspectors."
+    },
+    {
+      "participant_id": "MENRO-02",
+      "lgu": "LGU-02",
+      "office_role": "Environment & Natural Resources Officer",
+      "governance_area": "Sustainable Public Service",
+      "subtheme": "Sustained resource allocation and visible service delivery",
+      "skills_indicators": "Beyond Paper Compliance, Sustained Resource Allocation, Visible Service Delivery",
+      "narrative_quote": "Our materials recovery facility and sanitary landfill operations remain fully staffed and funded year-round because environmental compliance is seen as public health protection, not paper compliance."
+    },
+    {
+      "participant_id": "MLGOO-01",
+      "lgu": "LGU-01",
+      "office_role": "DILG Field Officer",
+      "governance_area": "Institutional Evaluation & Oversight",
+      "subtheme": "Moving beyond documentary compliance",
+      "skills_indicators": "Sustainable Governance, Embedded Accountability, Outside Assessment Cycle",
+      "narrative_quote": "Across cases, sustainable SGLG performance was distinguished from documentary compliance by the extent to which governance practices were institutionalized, owned by responsible offices, continuously monitored, and maintained outside the formal assessment cycle."
+    },
+    {
+      "participant_id": "MTO-03",
+      "lgu": "LGU-03",
+      "office_role": "Municipal Treasurer",
+      "governance_area": "Financial Records Management",
+      "subtheme": "Documentation backlog and technical capacity",
+      "skills_indicators": "Documentation Backlog, Technical Capacity, Records Management, Inter-Office Delays",
+      "narrative_quote": "Reconciling revenue audit trails between the treasury and accounting suffered from inter-office delays and manual records management, resulting in last-minute compliance cramming."
+    },
+    {
+      "participant_id": "LCE-01-SEC",
+      "lgu": "LGU-01",
+      "office_role": "Executive Assistant to the Mayor",
+      "governance_area": "Interdepartmental Escalation",
+      "subtheme": "Escalation of unresolved issues and institutional accountability",
+      "skills_indicators": "Escalation Mechanism, Institutional Accountability, Department Heads",
+      "narrative_quote": "When department focal persons encounter bottlenecks in submitting documentary evidence, the issue is immediately escalated to the monthly executive coordination meeting presided over by the Mayor."
+    },
+    {
+      "participant_id": "MEO-02",
+      "lgu": "LGU-02",
+      "office_role": "Municipal Engineer",
+      "governance_area": "Year-Round Monitoring & SOPs",
+      "subtheme": "Routine reports and continuation of practices",
+      "skills_indicators": "Routine Reports, Year-Round Monitoring, SOPs, Continuation of Practices",
+      "narrative_quote": "Infrastructure project monitoring reports and accessibility compliance are updated bi-monthly as a routine standard operating procedure, not solely when the SGLG national validation team arrives."
+    },
+    {
+      "participant_id": "DILG-PO",
+      "lgu": "LGU-PROV",
+      "office_role": "Provincial Assessment Team Lead",
+      "governance_area": "Technical Assistance as Enabling Mechanism",
+      "subtheme": "DILG technical assistance, pre-assessment, coaching",
+      "skills_indicators": "DILG Technical Assistance, Pre-Assessment, Coaching, Capacity Gaps",
+      "narrative_quote": "DILG technical assistance acts as a key enabling mechanism through orientation and pre-assessment diagnostics, but internal LGU capacity dictates how effectively corrective actions are institutionalized."
+    },
+    {
+      "participant_id": "LCE-03-LEAD",
+      "lgu": "LGU-03",
+      "office_role": "Vice Mayor & Sanggunian Lead",
+      "governance_area": "Legislative Support & Governance Transformation",
+      "subtheme": "Learning from previous assessment gaps, policy changes",
+      "skills_indicators": "Governance Transformation, Concrete Changes in Policy, Learning from Gaps, Ordinances",
+      "narrative_quote": "Learning from our past assessment failure in local legislation transparency, the Sanggunian enacted landmark ordinances digitizing legislative records and establishing strict accountability arrangements."
     }
   ]
 }
