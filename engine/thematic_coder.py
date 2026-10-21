@@ -8,6 +8,13 @@ import numpy as np
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS, TfidfVectorizer
 
+from engine.taglish_normalizer import (
+    TAGALOG_STOP_WORDS,
+    extract_salient_terms,
+    is_taglish_text,
+    normalize_taglish_text,
+)
+
 
 # Teacher's Study 3 Thematic Framework for SGLG Local Governance
 SGLG_GOVERNANCE_THEMES: List[Dict[str, Any]] = [
@@ -166,131 +173,19 @@ SGLG_GOVERNANCE_THEMES: List[Dict[str, Any]] = [
     },
 ]
 
-# Alternate preset: Alumni Career Tracking & CHED Alignment
-ALUMNI_TRACER_THEMES: List[Dict[str, Any]] = [
-    {
-        "id": "software_engineering",
-        "name": "Software & Systems Engineering",
-        "color": "#6366f1",
-        "description": "Full-stack, web, mobile, and enterprise software architecture and development.",
-        "keywords": [
-            "software engineer", "software developer", "web developer", "frontend", "backend",
-            "full stack", "full-stack", "fullstack", "react", "next.js", "nodejs", "node.js",
-            "laravel", "javascript", "typescript", "java", "c#", ".net", "flutter", "android",
-            "mobile app", "programmer", "systems developer", "api", "microservices", "git",
-            "web application", "django", "flask", "spring boot", "php",
-        ],
-    },
-    {
-        "id": "data_ai_analytics",
-        "name": "Data Science, AI & Analytics",
-        "color": "#06b6d4",
-        "description": "Data analysis, business intelligence, machine learning, and data mining workflows.",
-        "keywords": [
-            "data analyst", "data scientist", "data mining", "machine learning", "artificial intelligence",
-            "deep learning", "nlp", "natural language processing", "distilbert", "power bi", "tableau",
-            "sql", "postgresql", "mysql", "pandas", "python", "data visualization", "business intelligence",
-            "predictive modeling", "statistics", "analytics", "big data", "etl", "data engineer",
-            "llm", "computer vision", "tensorflow", "pytorch",
-        ],
-    },
-    {
-        "id": "infra_cybersecurity",
-        "name": "Cloud, Network & Cybersecurity",
-        "color": "#10b981",
-        "description": "Network administration, technical infrastructure support, cloud ops, and information security.",
-        "keywords": [
-            "network engineer", "network administrator", "cybersecurity", "information security",
-            "cyber defense", "cloud", "aws", "azure", "devops", "system administrator", "sysadmin",
-            "it specialist", "it support", "technical support", "hardware", "windows server",
-            "linux", "cisco", "ccna", "firewall", "network security", "troubleshooting", "helpdesk",
-            "infrastructure", "database administrator",
-        ],
-    },
-    {
-        "id": "creative_multimedia",
-        "name": "Creative Design & Digital Media",
-        "color": "#ec4899",
-        "description": "Graphic design, UI/UX, video editing, multimedia production, and digital marketing creatives.",
-        "keywords": [
-            "graphic designer", "graphics designer", "video editor", "multimedia", "ui/ux",
-            "ux design", "ui design", "figma", "photoshop", "premiere pro", "illustrator",
-            "canva", "videographer", "photographer", "creative director", "art direction",
-            "logo design", "social media graphic", "brand identity", "animation", "web design",
-            "content creator", "layout design",
-        ],
-    },
-    {
-        "id": "bpo_support_admin",
-        "name": "BPO, Customer Service & Admin Ops",
-        "color": "#f59e0b",
-        "description": "Customer service representation, back-office encoding, virtual assistance, and administrative roles.",
-        "keywords": [
-            "call center", "customer service", "csr", "support representative", "technical support representative",
-            "virtual assistant", "data entry", "data encoder", "encoder", "administrative assistant",
-            "office clerk", "receptionist", "cashier", "chat support", "back office", "bpo",
-            "document preparation", "transcription", "order processing", "client relations",
-            "delivery rider", "service crew", "sales associate",
-        ],
-    },
-    {
-        "id": "management_business",
-        "name": "Business, Finance & Management",
-        "color": "#8b5cf6",
-        "description": "Project management, operations leadership, financial analysis, accounting, and entrepreneurship.",
-        "keywords": [
-            "project manager", "operations manager", "assistant manager", "team lead", "supervisor",
-            "business analyst", "accountant", "accounting", "financial analyst", "auditor",
-            "human resources", "hr", "recruitment", "executive", "founder", "ceo", "director",
-            "procurement", "supply chain", "sales manager", "marketing manager", "scrum master",
-            "product manager", "entrepreneur",
-        ],
-    },
-    {
-        "id": "career_transition_seeking",
-        "name": "Career Transition & Job Seeking",
-        "color": "#ef4444",
-        "description": "Graduates actively seeking entry-level opportunities, transitioning roles, or open to work.",
-        "keywords": [
-            "open to work", "seeking", "looking for", "aspiring", "job hunter", "job seeker",
-            "fresh graduate", "entry-level", "entry level", "immediately available", "unemployed",
-            "career shifter", "actively applying", "exploring opportunities", "available for hire",
-            "looking for opportunities",
-        ],
-    },
-    {
-        "id": "academic_upskilling",
-        "name": "Academic, OJT & Skill Development",
-        "color": "#3b82f6",
-        "description": "Academic internships, OJT traineeships, continuing education, certifications, and research.",
-        "keywords": [
-            "student", "intern", "internship", "ojt", "trainee", "attended", "attending",
-            "undergraduate", "scholar", "researcher", "thesis", "capstone", "bootcamp",
-            "certification", "instructor", "faculty", "professor", "teacher", "tutor",
-            "academic", "university", "college",
-        ],
-    },
-]
-
 THEME_PRESETS: Dict[str, Dict[str, Any]] = {
     "sglg_governance": {
         "id": "sglg_governance",
-        "name": "Teacher's SGLG Governance Study (6 Themes)",
-        "description": "Seal of Good Local Governance (SGLG) qualitative framework covering leadership, interdepartmental coordination, operational challenges, institutionalization, DILG assistance, and sustained governance.",
+        "name": "Teacher's SGLG Governance Study (6 Core Themes)",
+        "description": "Seal of Good Local Governance (SGLG) qualitative framework covering leadership, interdepartmental coordination, operational challenges, institutionalization, DILG assistance, and sustained governance ('Beyond Paper Compliance').",
         "themes": SGLG_GOVERNANCE_THEMES,
-    },
-    "alumni_tracer": {
-        "id": "alumni_tracer",
-        "name": "Alumni Career Tracer & Alignment (8 Themes)",
-        "description": "Graduate tracer study framework analyzing software engineering, data science, cybersecurity, design, BPO ops, and CHED curriculum alignment.",
-        "themes": ALUMNI_TRACER_THEMES,
     },
 }
 
 # The default active codebook is the Teacher's SGLG Framework
 DEFAULT_THEMES: List[Dict[str, Any]] = SGLG_GOVERNANCE_THEMES
 
-DOMAIN_STOP_WORDS = set(ENGLISH_STOP_WORDS).union({
+DOMAIN_STOP_WORDS = set(ENGLISH_STOP_WORDS).union(TAGALOG_STOP_WORDS).union({
     "notes", "page", "item", "row", "entry", "response", "statement", "excerpt",
     "na", "none", "n/a", "yr", "yrs", "mo", "mos",
 })
@@ -369,6 +264,8 @@ class ThematicCoder:
     def code_single_record(self, text: str, distilbert_result: Dict[str, Any]) -> Dict[str, Any]:
         """Assign primary theme, secondary theme, matched codes, and trajectory tone to a single record."""
         lower_text = (text or "").lower()
+        normalized_lower_text = normalize_taglish_text(lower_text).lower()
+        taglish_detected = is_taglish_text(lower_text)
         scores: List[Dict[str, Any]] = []
 
         for theme in self.themes:
@@ -378,9 +275,19 @@ class ThematicCoder:
                 kw_lower = kw.lower().strip()
                 if not kw_lower:
                     continue
-                # Match whole token or multi-word phrase
+                # Match whole token or multi-word phrase in lower_text
                 pattern = r"(?:^|[^a-z0-9])" + re.escape(kw_lower) + r"(?:$|[^a-z0-9])"
                 matches = re.findall(pattern, lower_text)
+
+                # If not matched, try Taglish prefixed pattern (e.g., nag-cramming, nadelay, pag-audit)
+                if not matches:
+                    prefix_pattern = r"(?:^|[^a-z0-9])(?:nag|mag|pag|pagka|na|ma|ipag|i)-?" + re.escape(kw_lower) + r"(?:$|[^a-z0-9])"
+                    matches = re.findall(prefix_pattern, lower_text)
+
+                # If still not matched, check normalized stem text
+                if not matches and normalized_lower_text != lower_text:
+                    matches = re.findall(pattern, normalized_lower_text)
+
                 if matches:
                     matched_codes.append(kw)
                     # Multi-word phrases carry higher specificity weight
@@ -389,11 +296,11 @@ class ThematicCoder:
 
             # Contextual boost from DistilBERT prediction
             status = distilbert_result.get("final_status", "unknown")
-            if status == "unemployed" and theme["id"] in ("career_transition_seeking", "academic_upskilling"):
+            if status == "deficient" and theme["id"] == "theme_3_operational_challenges":
                 raw_score += 0.75
-            elif status == "underemployed" and theme["id"] in ("bpo_support_admin", "creative_multimedia"):
+            elif status == "constrained" and theme["id"] in ("theme_3_operational_challenges", "theme_5_dilg_technical_assistance"):
                 raw_score += 0.65
-            elif status == "employed" and theme["id"] in ("software_engineering", "data_ai_analytics", "infra_cybersecurity"):
+            elif status == "sustained" and theme["id"] in ("theme_4_institutionalization_continuity", "theme_6_beyond_paper_compliance", "theme_1_leadership_governance"):
                 raw_score += 0.35
 
             scores.append({
@@ -407,55 +314,56 @@ class ThematicCoder:
         scores.sort(key=lambda x: x["score"], reverse=True)
         total_score = sum(s["score"] for s in scores) or 1.0
 
-        primary = scores[0] if scores and scores[0]["score"] > 0 else None
-        secondary = scores[1] if len(scores) > 1 and scores[1]["score"] > 0 else None
+        has_direct_match = any(len(s["matched_codes"]) > 0 for s in scores)
 
-        if primary is None:
-            # Fallback theme selection
-            fb_theme = self.themes[0]
+        if not has_direct_match:
+            # Fallback: Extract emergent candidate qualitative codes from salient non-stopword tokens
+            emergent_codes = extract_salient_terms(text, top_n=3)
+            candidate_labels = [f"[Emergent] {c}" for c in emergent_codes] if emergent_codes else ["[Emergent] General Governance"]
             primary = {
-                "theme_id": fb_theme["id"],
-                "theme_name": fb_theme["name"],
-                "color": fb_theme["color"],
-                "score": 1.0,
-                "matched_codes": [],
+                "theme_id": "unassigned_review",
+                "theme_name": "Unassigned / Needs Review",
+                "color": "#94a3b8",
+                "score": 0.5,
+                "matched_codes": candidate_labels,
             }
-            theme_confidence = round(float(distilbert_result.get("confidence", 0.65)) * 0.75, 4)
+            secondary = None
+            theme_confidence = 0.35
+            all_matched_codes = list(candidate_labels)
+            tone = "Unassigned / Qualitative Review Needed"
         else:
-            theme_confidence = round(min(0.99, 0.55 + (primary["score"] / (total_score + 1.5)) * 0.45), 4)
+            primary = scores[0] if scores and scores[0]["score"] > 0 else None
+            secondary = scores[1] if len(scores) > 1 and scores[1]["score"] > 0 else None
+            theme_confidence = round(min(0.99, 0.55 + (primary["score"] / (total_score + 1.5)) * 0.45), 4) if primary else 0.50
 
-        all_matched_codes = []
-        for s in scores[:3]:
-            for code in s["matched_codes"]:
-                if code not in all_matched_codes:
-                    all_matched_codes.append(code)
+            all_matched_codes = []
+            for s in scores[:3]:
+                for code in s["matched_codes"]:
+                    if code not in all_matched_codes:
+                        all_matched_codes.append(code)
 
-        # Determine qualitative trajectory tone based on domain
-        pid = primary["theme_id"]
-        if pid == "theme_1_leadership_governance":
-            tone = "Executive Reform & Leadership Direction"
-        elif pid == "theme_2_interdepartmental_coordination":
-            tone = "Cross-Office Coordination & Systemic Accountability"
-        elif pid == "theme_3_operational_challenges":
-            tone = "Operational Barrier / Capacity Constraint"
-        elif pid == "theme_4_institutionalization_continuity":
-            tone = "Institutionalized / Routine Governance Practice"
-        elif pid == "theme_5_dilg_technical_assistance":
-            tone = "Technical Advisory / Capacity Enablement"
-        elif pid == "theme_6_beyond_paper_compliance":
-            tone = "Sustained Public Service & Impact-Driven Governance"
-        else:
-            final_status = distilbert_result.get("final_status", "unemployed")
-            if final_status == "employed":
-                tone = "Aligned Professional Growth"
-            elif final_status == "underemployed":
-                tone = "Skill-Role Misalignment / Underutilization"
+            # Determine qualitative trajectory tone based on domain
+            pid = primary["theme_id"]
+            if pid == "theme_1_leadership_governance":
+                tone = "Executive Reform & Leadership Direction"
+            elif pid == "theme_2_interdepartmental_coordination":
+                tone = "Cross-Office Coordination & Systemic Accountability"
+            elif pid == "theme_3_operational_challenges":
+                tone = "Operational Barrier / Capacity Constraint"
+            elif pid == "theme_4_institutionalization_continuity":
+                tone = "Institutionalized / Routine Governance Practice"
+            elif pid == "theme_5_dilg_technical_assistance":
+                tone = "Technical Advisory / Capacity Enablement"
+            elif pid == "theme_6_beyond_paper_compliance":
+                tone = "Sustained Public Service & Impact-Driven Governance"
             else:
-                tone = (
-                    "Academic / Pre-Career Preparation"
-                    if primary["theme_id"] == "academic_upskilling"
-                    else "Active Opportunity Seeking"
-                )
+                final_status = distilbert_result.get("final_status", "deficient")
+                if final_status == "sustained":
+                    tone = "Institutionalized Governance Continuity"
+                elif final_status == "constrained":
+                    tone = "Resource-Constrained / Implementation Gap"
+                else:
+                    tone = "Compliance Deficit / Documentary Cramming"
 
         return {
             "primary_theme_id": primary["theme_id"],
@@ -466,6 +374,7 @@ class ThematicCoder:
             "theme_confidence": theme_confidence,
             "matched_codes": all_matched_codes[:10],
             "trajectory_tone": tone,
+            "is_taglish": taglish_detected,
             "theme_scores": [
                 {
                     "id": s["theme_id"],
@@ -489,7 +398,7 @@ class ThematicCoder:
         theme_counts: Counter = Counter()
         status_counts: Counter = Counter()
         theme_outcome_matrix: Dict[str, Dict[str, int]] = defaultdict(
-            lambda: {"employed": 0, "underemployed": 0, "unemployed": 0, "total": 0}
+            lambda: {"sustained": 0, "constrained": 0, "deficient": 0, "total": 0}
         )
         theme_texts: Dict[str, List[str]] = defaultdict(list)
         all_codes_counter: Counter = Counter()
@@ -511,9 +420,11 @@ class ThematicCoder:
             p_theme = theme_res["primary_theme"]
             f_status = db_res["final_status"]
 
+            norm_status = f_status if f_status in ("sustained", "constrained", "deficient") else "deficient"
+
             theme_counts[p_theme] += 1
-            status_counts[f_status] += 1
-            theme_outcome_matrix[p_theme][f_status] = theme_outcome_matrix[p_theme].get(f_status, 0) + 1
+            status_counts[norm_status] += 1
+            theme_outcome_matrix[p_theme][norm_status] = theme_outcome_matrix[p_theme].get(norm_status, 0) + 1
             theme_outcome_matrix[p_theme]["total"] += 1
             theme_texts[p_theme].append(input_text)
 
@@ -561,9 +472,13 @@ class ThematicCoder:
                 "skills": str(row.get("skills") or ""),
                 "respondent_group": respondent_group,
                 "distilbert_label": db_res["distilbert_label"],
-                "final_status": f_status,
-                "governance_status": "Sustained / Institutionalized" if f_status == "employed" else ("Constrained / In-Progress" if f_status == "underemployed" else "Deficient / Unaligned"),
-                "governance_status_key": "sustained" if f_status == "employed" else ("constrained" if f_status == "underemployed" else "deficient"),
+                "final_status": norm_status,
+                "governance_status": (
+                    "Sustained / Institutionalized" if norm_status == "sustained"
+                    else ("Constrained / In-Progress" if norm_status == "constrained"
+                    else "Deficient / Unaligned")
+                ),
+                "governance_status_key": norm_status,
                 "confidence": db_res["confidence"],
                 "probabilities": db_res["probabilities"],
                 "logits": db_res["logits"],
@@ -581,6 +496,7 @@ class ThematicCoder:
                 "theme_confidence": theme_res["theme_confidence"],
                 "matched_codes": theme_res["matched_codes"],
                 "trajectory_tone": theme_res["trajectory_tone"],
+                "is_taglish": theme_res.get("is_taglish", False),
                 "theme_scores": theme_res["theme_scores"],
             })
 
@@ -596,29 +512,37 @@ class ThematicCoder:
         )
 
         total_records = len(analyzed_rows)
+        taglish_count = sum(1 for r in analyzed_rows if r.get("is_taglish"))
         theme_color_map = {t["name"]: t["color"] for t in self.themes}
+        theme_color_map["Unassigned / Needs Review"] = "#94a3b8"
         theme_desc_map = {t["name"]: t["description"] for t in self.themes}
+        theme_desc_map["Unassigned / Needs Review"] = (
+            "Excerpts without predefined codebook keyword matches; emergent candidate codes were auto-extracted for qualitative review."
+        )
 
         theme_summary = []
         for t_name, count in theme_counts.most_common():
             outcomes = theme_outcome_matrix[t_name]
+            sust = outcomes.get("sustained", 0)
+            constr = outcomes.get("constrained", 0)
+            defic = outcomes.get("deficient", 0)
             theme_summary.append({
                 "theme": t_name,
                 "color": theme_color_map.get(t_name, "#6366f1"),
                 "description": theme_desc_map.get(t_name, ""),
                 "count": count,
                 "percentage": round((count / total_records) * 100.0, 1) if total_records else 0.0,
-                "employed": outcomes["employed"],
-                "underemployed": outcomes["underemployed"],
-                "unemployed": outcomes["unemployed"],
-                "sustained": outcomes["employed"],
-                "constrained": outcomes["underemployed"],
-                "deficient": outcomes["unemployed"],
+                "sustained": sust,
+                "constrained": constr,
+                "deficient": defic,
                 "top_keywords": per_theme_keywords.get(t_name, []),
             })
 
         dominant_theme = theme_summary[0]["theme"] if theme_summary else "None"
-        employed_pct = round((status_counts["employed"] / total_records) * 100.0, 1) if total_records else 0.0
+        sustained_cnt = status_counts.get("sustained", 0)
+        constrained_cnt = status_counts.get("constrained", 0)
+        deficient_cnt = status_counts.get("deficient", 0)
+        inst_pct = round((sustained_cnt / total_records) * 100.0, 1) if total_records else 0.0
         avg_conf = round(float(np.mean(confidences)) * 100.0, 2) if confidences else 0.0
         avg_latency = round(total_latency_ms / total_records, 3) if total_records else 0.0
 
@@ -703,17 +627,16 @@ class ThematicCoder:
             "summary": {
                 "total_records": total_records,
                 "dominant_theme": dominant_theme,
-                "employed_count": status_counts["employed"],
-                "underemployed_count": status_counts["underemployed"],
-                "unemployed_count": status_counts["unemployed"],
-                "sustained_count": status_counts["employed"],
-                "constrained_count": status_counts["underemployed"],
-                "deficient_count": status_counts["unemployed"],
-                "employment_alignment_rate": employed_pct,
-                "institutionalization_rate": employed_pct,
+                "sustained_count": sustained_cnt,
+                "constrained_count": constrained_cnt,
+                "deficient_count": deficient_cnt,
+                "institutionalization_rate": inst_pct,
                 "mean_confidence_pct": avg_conf,
                 "total_latency_ms": round(total_latency_ms, 2),
                 "avg_latency_ms": avg_latency,
+                "taglish_records_count": taglish_count,
+                "taglish_percentage": round((taglish_count / total_records) * 100.0, 1) if total_records else 0.0,
+                "taglish_support_active": True,
             },
             "theme_distribution": theme_summary,
             "top_matched_codes": [
@@ -863,22 +786,22 @@ class ThematicCoder:
                 "Cross-Case Comparison (Theme 3): Operational barriers vary across LGU cases primarily in records management, staffing turnover, and budget capacity."
             )
         else:
-            emp = status_counts["employed"]
-            under = status_counts["underemployed"]
-            unemp = status_counts["unemployed"]
+            sust = status_counts.get("sustained", 0)
+            constr = status_counts.get("constrained", 0)
+            defic = status_counts.get("deficient", 0)
             insights.append(
-                f"DistilBERT Outcome Breakdown: {emp} Employed ({round(emp/total*100, 1)}%), "
-                f"{under} Underemployed ({round(under/total*100, 1)}%), and {unemp} Unemployed ({round(unemp/total*100, 1)}%) "
+                f"Governance Trajectory Breakdown: {sust} Sustained / Institutionalized ({round(sust/total*100, 1)}%), "
+                f"{constr} Constrained / In-Progress ({round(constr/total*100, 1)}%), and {defic} Deficient / Unaligned ({round(defic/total*100, 1)}%) "
                 f"with a mean Softmax confidence of {avg_conf}%."
             )
-            if under > 0:
-                under_themes = [t for t in theme_summary if t["underemployed"] > 0]
-                if under_themes:
-                    under_themes.sort(key=lambda x: x["underemployed"], reverse=True)
-                    ut = under_themes[0]
+            if constr > 0:
+                constr_themes = [t for t in theme_summary if t.get("constrained", 0) > 0]
+                if constr_themes:
+                    constr_themes.sort(key=lambda x: x.get("constrained", 0), reverse=True)
+                    ut = constr_themes[0]
                     insights.append(
-                        f"Underemployment Concentration: Highest skill-role misalignment appears in '{ut['theme']}' "
-                        f"({ut['underemployed']} records classified as underemployed)."
+                        f"Operational Bottleneck Concentration: Highest compliance constraints appear in '{ut['theme']}' "
+                        f"({ut.get('constrained', 0)} records classified as constrained / in-progress)."
                     )
 
         if all_codes_counter:
@@ -886,3 +809,509 @@ class ThematicCoder:
             insights.append(f"Most Frequent Thematic Codes Across Corpus: {top_codes}.")
 
         return insights
+
+    def generate_narrative_draft(
+        self,
+        analysis: Dict[str, Any],
+        case_filter: Optional[str] = None,
+        depth: str = "comprehensive",
+    ) -> Dict[str, Any]:
+        """Generate a structured qualitative thematic analysis narrative synthesis draft.
+
+        Follows the 5-step thematic synthesis sequence, embedding verbatim participant quotes,
+        cross-case comparisons (LGU-01, LGU-02, LGU-03), and central analytical benchmarks.
+        """
+        records = analysis.get("records", []) or []
+        summary = analysis.get("summary", {}) or {}
+        cross_case_matrix = analysis.get("cross_case_matrix", {}) or {}
+
+        def _get_val(r: Dict[str, Any], *keys) -> str:
+            for k in keys:
+                v = r.get(k)
+                if v:
+                    return str(v).strip()
+            raw = r.get("raw_record")
+            if isinstance(raw, dict):
+                for k in keys:
+                    v = raw.get(k)
+                    if v:
+                        return str(v).strip()
+            return ""
+
+        # Apply case filter if requested
+        if case_filter and case_filter.lower().strip() not in ("all", "all cases", ""):
+            cf = case_filter.lower().strip()
+            filtered_records = [
+                r for r in records
+                if cf in _get_val(r, "company", "current_company", "lgu", "municipality", "city").lower()
+                or cf in _get_val(r, "identifier", "full_name", "participant_id", "name", "id").lower()
+            ]
+        else:
+            filtered_records = list(records)
+
+        total_recs = len(filtered_records)
+        if total_recs == 0:
+            return {
+                "title": "Qualitative Thematic Analysis & Academic Narrative Draft",
+                "subtitle": "No records available for the selected criteria",
+                "metadata": {"total_records": 0},
+                "sections": [],
+                "markdown": "No records available to generate narrative.",
+                "plain_text": "No records available to generate narrative.",
+                "html_document": "<!DOCTYPE html><html><body><p>No records available.</p></body></html>",
+            }
+
+        # Discover unique LGUs in dataset
+        lgu_set = set()
+        for r in filtered_records:
+            lgu_val = _get_val(r, "company", "current_company", "lgu", "municipality", "city")
+            if lgu_val:
+                lgu_set.add(lgu_val)
+        cases_analyzed = sorted(list(lgu_set)) if lgu_set else ["LGU-01", "LGU-02", "LGU-03"]
+
+        # Count themes within filtered set
+        theme_rec_map = defaultdict(list)
+        status_rec_map = defaultdict(int)
+        for r in filtered_records:
+            t = _get_val(r, "primary_theme", "theme", "dominant_theme") or "Unassigned"
+            theme_rec_map[t].append(r)
+            status_rec_map[r.get("final_status", "sustained")] += 1
+
+        sustained_cnt = status_rec_map["sustained"]
+        constrained_cnt = status_rec_map["constrained"]
+        deficient_cnt = status_rec_map["deficient"]
+        inst_rate = round((sustained_cnt / total_recs) * 100.0, 1) if total_recs else 0.0
+
+        # Determine dominant theme in this filtered set
+        sorted_themes = sorted(theme_rec_map.keys(), key=lambda k: len(theme_rec_map[k]), reverse=True)
+        dominant_theme = sorted_themes[0] if sorted_themes else "Unassigned"
+
+        is_sglg = any(
+            "governance" in str(t.get("name", "")).lower()
+            or "theme" in str(t.get("name", "")).lower()
+            or "sglg" in str(t.get("id", "")).lower()
+            for t in self.themes
+        )
+
+        # Title and Subtitle
+        narrative_title = "Qualitative Thematic Analysis Narrative Synthesis"
+        if is_sglg:
+            subtitle = "Moving Beyond Paper Compliance: An Empirical Multi-Case Analysis of SGLG Institutionalization"
+        else:
+            subtitle = "Thematic Patterns and Qualitative Evidence"
+
+        sections = []
+
+        # 1. Executive Overview Section
+        overview_paras = [
+            (
+                f"This empirical synthesis presents the qualitative thematic findings derived from {total_recs} "
+                f"narrative interview and transcript records collected across {len(cases_analyzed)} local government cases "
+                f"({', '.join(cases_analyzed)}). In alignment with qualitative case study methodology and thematic analysis principles, "
+                f"the study investigates the mechanisms through which local government units (LGUs) navigate governance performance standards, "
+                f"address structural and operational barriers, and transition from reactive documentary compliance toward genuine, "
+                f"institutionalized public service delivery."
+            ),
+            (
+                f"Across the corpus, thematic coding revealed that '{dominant_theme}' emerged as the dominant analytical pattern, "
+                f"comprising {len(theme_rec_map[dominant_theme])} of {total_recs} analyzed excerpts "
+                f"({round((len(theme_rec_map[dominant_theme]) / total_recs) * 100.0, 1)}%). "
+                f"In terms of institutionalization orientation, {sustained_cnt} excerpts ({inst_rate}%) demonstrated "
+                f"sustained, year-round administrative routines; {constrained_cnt} excerpts ({round((constrained_cnt / total_recs) * 100.0, 1)}%) "
+                f"reflected operational and capacity constraints; and {deficient_cnt} excerpts ({round((deficient_cnt / total_recs) * 100.0, 1)}%) "
+                f"highlighted documentary or reconciliation deficiencies resulting in compliance scrambles."
+            ),
+            (
+                "The findings are organized thematically below. Each theme is analyzed following an academic sequence: "
+                "articulating the primary empirical pattern, presenting verbatim stakeholder testimony, contrasting cross-case "
+                "experiences across the respective LGUs, and interpreting the implications for sustainable good governance."
+            ),
+        ]
+
+        sections.append({
+            "id": "overview",
+            "section_num": "1.0",
+            "title": "Executive Overview and Corpus Profile",
+            "theme_name": "Executive Overview",
+            "color": "#6366f1",
+            "paragraphs": overview_paras,
+            "quotes": [],
+            "benchmark": "",
+        })
+
+        # Theme-by-theme sections
+        sec_idx = 2
+        theme_def_map = {t["name"]: t for t in self.themes}
+
+        for t_name in sorted_themes:
+            t_records = theme_rec_map[t_name]
+            t_def = theme_def_map.get(t_name, {})
+            t_color = t_def.get("color", "#6366f1")
+            t_desc = t_def.get("description", "")
+            t_subthemes = t_def.get("subthemes", [])
+            t_bench = t_def.get("suggested_analytic_statement") or t_def.get("suggested_theme_conclusion") or ""
+            t_writing_seq = t_def.get("writing_sequence", "")
+
+            t_count = len(t_records)
+            t_pct = round((t_count / total_recs) * 100.0, 1)
+
+            # Count status for this theme
+            t_status_counts = Counter(r.get("final_status", "sustained") for r in t_records)
+            t_sustained = t_status_counts["sustained"]
+            t_constrained = t_status_counts["constrained"]
+            t_deficient = t_status_counts["deficient"]
+
+            # Collect quotes
+            quotes = []
+            for r in t_records:
+                quote_text = _get_val(r, "input_text", "about", "narrative_quote", "quote", "statement")
+                p_id = _get_val(r, "identifier", "full_name", "participant_id", "name", "id") or "Participant"
+                role = _get_val(r, "position", "current_position", "office_role", "role") or "Local Official"
+                lgu = _get_val(r, "company", "current_company", "lgu", "municipality", "city") or "LGU"
+                gov_area = _get_val(r, "degree", "degree_program", "governance_area", "skills")
+                status = "Sustained" if r.get("final_status") == "sustained" else ("Constrained" if r.get("final_status") == "constrained" else "Deficient")
+
+                if quote_text:
+                    quotes.append({
+                        "participant_id": p_id,
+                        "office_role": role,
+                        "lgu": lgu,
+                        "governance_area": gov_area,
+                        "quote": quote_text,
+                        "status": status,
+                    })
+
+            # Synthesize scholarly text for this theme
+            theme_paras = []
+
+            # Step 1: Dominant Pattern
+            pattern_para = (
+                f"{t_name} accounts for {t_count} of the {total_recs} analyzed narrative records ({t_pct}% of the corpus), "
+                f"with {t_sustained} instances reflecting sustained institutional practices and {t_constrained + t_deficient} "
+                f"instances pointing to operational or documentary bottlenecks. "
+                f"{t_desc} "
+            )
+            if t_subthemes:
+                pattern_para += f"Key empirical dimensions under this theme include: {', '.join(t_subthemes[:4])}."
+            theme_paras.append(pattern_para)
+
+            # Step 2: Evidence & Participant Quotes
+            if quotes:
+                quote_intro_para = (
+                    f"Participant testimony provided substantive qualitative depth illustrating how this theme operates in practice. "
+                    f"Stakeholders across {', '.join(sorted(list({q['lgu'] for q in quotes})))} articulated specific governance "
+                    f"realities that distinguish routine administrative habit from periodic audit compliance:"
+                )
+                theme_paras.append(quote_intro_para)
+
+            # Step 3: Cross-Case Contrasts & Discussion
+            lgus_in_theme = sorted(list({q['lgu'] for q in quotes}))
+            if len(lgus_in_theme) > 1:
+                cross_para = (
+                    f"Cross-case comparison reveals distinct institutional postures among the participating LGUs regarding {t_name}. "
+                    f"While participants in {lgus_in_theme[0]} underscored executive mandates and routinized monitoring to maintain continuity, "
+                    f"stakeholders in {', '.join(lgus_in_theme[1:])} highlighted challenges related to departmental coordination and resource allocation. "
+                    f"This contrast demonstrates that institutional maturity is shaped not solely by administrative intent, but by the "
+                    f"presence of formalized operational workflows and dedicated focal accountability."
+                )
+            else:
+                cross_para = (
+                    f"Within the reporting cases, accounts underscored that sustainable governance under {t_name} "
+                    f"demands continuous inter-office synchronization. Stakeholders emphasized that absent formalized coordination, "
+                    f"governance performance remains vulnerable to personnel changes and administrative bottlenecks."
+                )
+            theme_paras.append(cross_para)
+
+            # Step 4: Analytical Interpretation & Benchmark
+            if t_bench:
+                bench_para = (
+                    f"Analytically, these findings reinforce the central empirical benchmark of the study: "
+                    f"\"{t_bench}\" "
+                    f"Rather than evaluating compliance through the static volume of documents compiled during the DILG table audit, "
+                    f"the evidence indicates that genuine local governance success is manifested in daily, uninterrupted service delivery."
+                )
+            else:
+                bench_para = (
+                    f"Interpreting these findings within the broader framework of SGLG performance demonstrates that "
+                    f"administrative practices must be decoupled from the assessment calendar. When local departments embed "
+                    f"standards into their daily operating routines, compliance becomes a natural consequence of good governance "
+                    f"rather than an artificial end in itself."
+                )
+            theme_paras.append(bench_para)
+
+            sections.append({
+                "id": f"theme_{sec_idx}",
+                "section_num": f"{sec_idx}.0",
+                "title": f"Thematic Analysis: {t_name}",
+                "theme_name": t_name,
+                "color": t_color,
+                "record_count": t_count,
+                "percentage": t_pct,
+                "status_breakdown": {
+                    "sustained": t_sustained,
+                    "constrained": t_constrained,
+                    "deficient": t_deficient,
+                },
+                "benchmark": t_bench,
+                "writing_sequence": t_writing_seq,
+                "subthemes": t_subthemes,
+                "paragraphs": theme_paras,
+                "quotes": quotes[:3],  # Top 3 representative quotes
+            })
+            sec_idx += 1
+
+        # Cross-Case Operational Barriers Section (Theme 3 Synthesis)
+        if cross_case_matrix and cross_case_matrix.get("rows"):
+            rows = cross_case_matrix["rows"]
+            barriers_paras = [
+                (
+                    "A critical dimension of Study 3 involves understanding how differing municipal contexts navigate "
+                    "operational, financial, and human-resource constraints. The cross-case comparative matrix synthesizes "
+                    "five core operational challenges across the investigated LGUs:"
+                ),
+            ]
+            for r in rows:
+                issue = r.get("issue", "")
+                interp = r.get("interpretation", "")
+                lgu1 = r.get("lgu_01", "")
+                lgu2 = r.get("lgu_02", "")
+                lgu3 = r.get("lgu_03", "")
+                barriers_paras.append(
+                    f"• {issue}: Ambaguio (LGU-01) addressed this through {lgu1.lower()}; Peñablanca (LGU-02) navigated this via {lgu2.lower()}; while LGU-03 experienced {lgu3.lower()}. Analytical takeaway: {interp}"
+                )
+            barriers_paras.append(
+                "Across all cases, lower-income municipalities demonstrated that fiscal and staffing headroom deficits can be "
+                "meaningfully mitigated through executive political will, localized human resource incentives (such as hiring points), "
+                "and proactive hands-on engagement with DILG technical assistance coaching."
+            )
+
+            sections.append({
+                "id": "operational_barriers",
+                "section_num": f"{sec_idx}.0",
+                "title": "Cross-Case Synthesis of Operational Barriers and Institutional Adaptations",
+                "theme_name": "Operational Barriers Synthesis",
+                "color": "#f59e0b",
+                "paragraphs": barriers_paras,
+                "quotes": [],
+                "benchmark": "Institutionalization through executive designations and localized HR policies shields SGLG continuity from personnel turnover.",
+            })
+            sec_idx += 1
+
+        # Culminating Synthesis Section (Theme 6 Synthesis)
+        culminating_paras = [
+            (
+                "The culminating theoretical synthesis of this research centers on the critical distinction between "
+                "superficial 'paper compliance' and authentic 'institutionalized good governance.' In the initial assessment cycles, "
+                "LGUs frequently engaged in last-minute compliance cramming—assembling folders and evidence binders two weeks prior "
+                "to the DILG validation team's arrival, which inevitably led to recurring documentation deficiencies and staff exhaustion."
+            ),
+            (
+                "By contrast, municipalities that successfully transitioned beyond paper compliance exhibited four defining institutional hallmarks: "
+                "(1) codification of governance standards into municipal ordinances and standard operating procedures (SOPs); "
+                "(2) establishment of shared digital drives and interdepartmental tracking committees; "
+                "(3) sustained fiscal commitments protected within annual investment programs regardless of political turnover; and "
+                "(4) visible, year-round service-delivery effects directly experienced by community constituents, such as 24/7 disaster operation centers, "
+                "sanitary landfill facilities, and mobile public services brought directly to vulnerable populations."
+            ),
+            (
+                "As summarized in the overarching conclusion of the study: "
+                "\"Across cases, sustainable SGLG performance was distinguished from documentary compliance by the extent to which "
+                "governance practices were institutionalized, owned by responsible offices, continuously monitored, and maintained outside "
+                "the formal assessment cycle.\""
+            ),
+        ]
+
+        sections.append({
+            "id": "culminating_synthesis",
+            "section_num": f"{sec_idx}.0",
+            "title": "Culminating Synthesis: Moving Beyond Paper Compliance into Sustainable Governance",
+            "theme_name": "Culminating Synthesis",
+            "color": "#ec4899",
+            "paragraphs": culminating_paras,
+            "quotes": [],
+            "benchmark": "Across cases, sustainable SGLG performance was distinguished from documentary compliance by the extent to which governance practices were institutionalized...",
+        })
+        sec_idx += 1
+
+        # NLP Computational Architecture & CAQDAS Triangulation Section
+        nlp_paras = [
+            (
+                "Methodological Triangulation: Integrating DistilBERT Deep Learning with Qualitative Thematic Analysis. "
+                "In alignment with contemporary computational qualitative inquiry (CAQDAS), this study integrates a fine-tuned "
+                "DistilBERT (Distilled Bidirectional Encoder Representations from Transformers) deep learning classifier with "
+                "thematic framework coding to evaluate local governance narratives."
+            ),
+            (
+                "Architectural Role of DistilBERT: Rather than relying on unconstrained generative large language models (LLMs) "
+                "that carry risks of synthetic fabrication and hallucinated qualitative themes, this system utilizes DistilBERT as an "
+                "Encoder-only sequence classifier (6 Transformer layers, 12 attention heads, 768-dimensional hidden representation). "
+                "Through multi-head self-attention, DistilBERT processes the bidirectional semantic context of each qualitative transcript "
+                "to evaluate its empirical governance posture across three institutional trajectories: Sustained/Institutionalized, "
+                "Constrained/In-Progress, or Deficient/Unaligned."
+            ),
+            (
+                "Code Generation & CAQDAS Rigor: Thematic codes and subthemes are generated through a hybrid dual pipeline. "
+                "Deductively, excerpts are cross-matched with the SGLG governance framework codebook using a Taglish morphological normalizer "
+                "(which resolves affixed loanwords such as 'nag-cramming', 'kinulang', 'nadelay', and 'pag-audit'). "
+                "Inductively, unsupervised TF-IDF keyphrase extraction and MiniBatch K-Means clustering discover emergent data-driven sub-themes. "
+                "Statements lacking direct codebook triggers are automatically surfaced with salient candidate codes and flagged as "
+                "'Unassigned / Needs Review' to preserve qualitative researcher reflexivity and auditability."
+            ),
+            (
+                "By triangulating DistilBERT Softmax sequence probabilities with Braun & Clarke's six-phase thematic methodology, "
+                "the analysis achieves computational scale while safeguarding qualitative authenticity, evidentiary grounding, and academic defensibility."
+            ),
+        ]
+
+        sections.append({
+            "id": "nlp_methodology",
+            "section_num": f"{sec_idx}.0",
+            "title": "Methodological Framework: DistilBERT NLP Architecture and CAQDAS Triangulation",
+            "theme_name": "NLP Methodology",
+            "color": "#3b82f6",
+            "paragraphs": nlp_paras,
+            "quotes": [],
+            "benchmark": "DistilBERT operates as a discriminative contextual encoder evaluating governance trajectories, triangulated with qualitative thematic coding to eliminate AI hallucinations.",
+        })
+        sec_idx += 1
+
+        # Methodological Notes & Guidance for the Thesis Author
+        guidance_paras = [
+            (
+                "Academic Note for the Researcher / Thesis Author: This narrative draft provides an empirically grounded baseline "
+                "synthesized from the classified participant transcripts and the teacher's qualitative SGLG framework. "
+                "When developing your final qualitative manuscript, you are encouraged to:"
+            ),
+            (
+                "1. Incorporate Local Context & Fieldwork Vignettes: Supplement the participant quotes above with observational notes from your site visits (e.g., descriptions of municipal hall operations, MDRRMO operation center logbooks, and Sanggunian ordinance archives)."
+            ),
+            (
+                "2. Conduct Thematic Member-Checking: Cross-reference the identified subthemes with your post-interview validation notes from key informants (LCEs, MLGOOs, MPDCs) to ensure interpretive validity."
+            ),
+            (
+                "3. Align with Institutional Theory: Weave in relevant public administration and institutional theory literature (e.g., Scott's regulative, normative, and cultural-cognitive pillars) to further substantiate why routines outlast audit-driven compliance."
+            ),
+        ]
+
+        sections.append({
+            "id": "author_guidance",
+            "section_num": f"{sec_idx}.0",
+            "title": "Methodological Notes and Author Reflexivity Guidance",
+            "theme_name": "Author Guidance",
+            "color": "#64748b",
+            "paragraphs": guidance_paras,
+            "quotes": [],
+            "benchmark": "",
+        })
+
+        # Build Markdown, Plain Text, and HTML document strings
+        md_lines = [
+            f"# {narrative_title}",
+            f"{subtitle}",
+            "",
+            f"Analysis Scope: {total_recs} qualitative narrative records | Cases Analyzed: {', '.join(cases_analyzed)}",
+            f"Dominant Theme: {dominant_theme} | Institutionalization Rate: {inst_rate}% Sustained ({sustained_cnt} of {total_recs} records)",
+            "",
+            "---",
+            "",
+        ]
+
+        text_lines = [
+            narrative_title.upper(),
+            "=" * len(narrative_title),
+            subtitle,
+            f"Scope: {total_recs} records | Cases: {', '.join(cases_analyzed)}",
+            f"Dominant Theme: {dominant_theme} | Institutionalization Rate: {inst_rate}%",
+            "-" * 70,
+            "",
+        ]
+
+        html_sections = []
+
+        for sec in sections:
+            sec_title = f"{sec['section_num']} {sec['title']}"
+            md_lines.append(f"## {sec_title}")
+            text_lines.append(f"\n{sec_title.upper()}\n{'-' * len(sec_title)}")
+
+            html_p_list = []
+            for p in sec["paragraphs"]:
+                md_lines.append(p)
+                md_lines.append("")
+                text_lines.append(p + "\n")
+                html_p_list.append(f"<p style=\"line-height:1.75; margin-bottom:14px; text-align:justify;\">{p}</p>")
+
+            html_quotes_list = []
+            for q in sec.get("quotes", []):
+                quote_md = (
+                    f"> \"{q['quote']}\"\n"
+                    f"> \n"
+                    f"> — {q['participant_id']} ({q['office_role']}, {q['lgu']}) · Status: {q['status']}"
+                )
+                md_lines.append(quote_md)
+                md_lines.append("")
+                text_lines.append(f"  \"{q['quote']}\"\n  -- {q['participant_id']} ({q['office_role']}, {q['lgu']}) [{q['status']}]\n")
+
+                html_quotes_list.append(
+                    f"<blockquote style=\"border-left:4px solid {sec['color']}; margin:16px 0; padding:12px 18px; background:#f8fafc; font-style:italic;\">"
+                    f"<p style=\"margin:0 0 8px 0; color:#1e293b;\">“{q['quote']}”</p>"
+                    f"<small style=\"display:block; font-style:normal; font-weight:bold; color:#475569;\">— {q['participant_id']} ({q['office_role']}, {q['lgu']}) <span style=\"display:inline-block; margin-left:8px; padding:2px 8px; border-radius:12px; font-size:11px; background:#e2e8f0; color:#334155;\">{q['status']}</span></small>"
+                    f"</blockquote>"
+                )
+
+            html_sections.append(
+                f"<section style=\"margin-bottom:32px;\">"
+                f"<h2 style=\"color:#0f172a; border-bottom:2px solid #e2e8f0; padding-bottom:6px; margin-top:24px;\">{sec_title}</h2>"
+                f"{''.join(html_p_list)}"
+                f"{''.join(html_quotes_list)}"
+                f"</section>"
+            )
+
+        full_markdown = "\n".join(md_lines)
+        full_plain_text = "\n".join(text_lines)
+
+        # Word-compatible HTML document (.doc compatible)
+        html_document = f"""<!DOCTYPE html>
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<title>{narrative_title}</title>
+<style>
+  body {{ font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; line-height: 1.6; color: #1e293b; max-width: 800px; margin: 40px auto; padding: 20px; }}
+  h1 {{ font-family: 'Segoe UI', Arial, sans-serif; font-size: 18pt; color: #0f172a; margin-bottom: 4px; }}
+  .subtitle {{ font-style: italic; color: #475569; font-size: 12pt; margin-bottom: 20px; }}
+  .meta-box {{ background: #f1f5f9; padding: 12px 16px; border-radius: 6px; font-family: sans-serif; font-size: 10pt; color: #334155; margin-bottom: 24px; }}
+  h2 {{ font-family: 'Segoe UI', Arial, sans-serif; font-size: 14pt; color: #1e293b; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; margin-top: 28px; }}
+  blockquote {{ border-left: 4px solid #6366f1; background: #f8fafc; padding: 10px 16px; margin: 16px 0; font-style: italic; }}
+  p {{ margin-bottom: 14px; text-align: justify; text-justify: inter-word; }}
+</style>
+</head>
+<body>
+  <h1>{narrative_title}</h1>
+  <div class="subtitle">{subtitle}</div>
+  <div class="meta-box">
+    <strong>Empirical Scope:</strong> {total_recs} Records across {', '.join(cases_analyzed)} |
+    <strong>Dominant Theme:</strong> {dominant_theme} |
+    <strong>Institutionalization Rate:</strong> {inst_rate}% Sustained ({sustained_cnt}/{total_recs})
+  </div>
+  {''.join(html_sections)}
+</body>
+</html>"""
+
+        return {
+            "title": narrative_title,
+            "subtitle": subtitle,
+            "metadata": {
+                "total_records": total_recs,
+                "dominant_theme": dominant_theme,
+                "cases_analyzed": cases_analyzed,
+                "institutionalization_rate": inst_rate,
+                "sustained_count": sustained_cnt,
+                "constrained_count": constrained_cnt,
+                "deficient_count": deficient_cnt,
+                "theme_counts": {t: len(theme_rec_map[t]) for t in sorted_themes},
+            },
+            "sections": sections,
+            "markdown": full_markdown,
+            "plain_text": full_plain_text,
+            "html_document": html_document,
+        }

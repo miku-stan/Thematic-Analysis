@@ -90,9 +90,15 @@ def parse_uploaded_file(filename: str, content: bytes) -> Dict[str, Any]:
     elif ext == "docx":
         records, columns = _parse_docx(content, filename=filename)
         file_type = "Word Transcript (.docx)"
+    elif ext == "doc":
+        records, columns = _parse_doc(content, filename=filename)
+        file_type = "Word Transcript (.doc)"
+    elif ext == "pdf":
+        records, columns = _parse_pdf(content, filename=filename)
+        file_type = "PDF Transcript (.pdf)"
     else:
         raise ValueError(
-            f"Unsupported file extension '.{ext}'. Supported formats: .csv, .xlsx, .json, .xml, .txt, .docx"
+            f"Unsupported file extension '.{ext}'. Supported formats: .csv, .xlsx, .json, .xml, .txt, .docx, .doc, .pdf"
         )
 
     suggested_mapping = auto_detect_mapping(columns)
@@ -340,33 +346,15 @@ def _extract_indicators(text: str) -> str:
     return ", ".join(found) if found else "sglg governance"
 
 
-def _parse_docx(content: bytes, filename: str = "") -> Tuple[List[Dict[str, Any]], List[str]]:
-    """Parse Microsoft Word (.docx) interview transcript into speaker turns and qualitative records."""
-    try:
-        with zipfile.ZipFile(io.BytesIO(content)) as z:
-            xml_content = z.read("word/document.xml")
-    except Exception as exc:
-        raise ValueError(f"Unable to read .docx archive: {exc}")
-
-    namespaces = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
-    try:
-        root = ET.fromstring(xml_content)
-    except Exception as exc:
-        raise ValueError(f"Unable to parse document XML in .docx: {exc}")
-
-    paras: List[str] = []
-    for p in root.iterfind(".//w:p", namespaces):
-        t = "".join([n.text for n in p.iterfind(".//w:t", namespaces) if n.text]).strip()
-        if t:
-            paras.append(t)
-
+def _parse_transcript_paragraphs(paras: List[str], filename: str = "") -> Tuple[List[Dict[str, Any]], List[str]]:
+    """Parse raw paragraphs of interview transcripts into structured qualitative records."""
     fname_lower = (filename or "").lower()
 
     # Determine municipality and case code
     if "ambaguio" in fname_lower:
         lgu_name = "Ambaguio"
         case_code = "LGU-01"
-    elif "penablanca" in fname_lower:
+    elif "penablanca" in fname_lower or "peñablanca" in fname_lower:
         lgu_name = "Peñablanca"
         case_code = "LGU-02"
     else:
@@ -484,7 +472,7 @@ def _parse_docx(content: bytes, filename: str = "") -> Tuple[List[Dict[str, Any]
 
     flush_turn()
 
-    # Fallback if no speaker turns detected (e.g. standard non-interview docx)
+    # Fallback if no speaker turns detected (e.g. generic document paragraphs)
     if not records:
         for idx, p in enumerate(paras):
             if len(p.split()) >= 8:
@@ -508,6 +496,97 @@ def _parse_docx(content: bytes, filename: str = "") -> Tuple[List[Dict[str, Any]
         "narrative_quote",
     ]
     return records, columns
+
+
+def _parse_docx(content: bytes, filename: str = "") -> Tuple[List[Dict[str, Any]], List[str]]:
+    """Parse Microsoft Word (.docx) interview transcript into speaker turns and qualitative records."""
+    try:
+        with zipfile.ZipFile(io.BytesIO(content)) as z:
+            xml_content = z.read("word/document.xml")
+    except Exception as exc:
+        raise ValueError(f"Unable to read .docx archive: {exc}")
+
+    namespaces = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+    try:
+        root = ET.fromstring(xml_content)
+    except Exception as exc:
+        raise ValueError(f"Unable to parse document XML in .docx: {exc}")
+
+    paras: List[str] = []
+    for p in root.iterfind(".//w:p", namespaces):
+        t = "".join([n.text for n in p.iterfind(".//w:t", namespaces) if n.text]).strip()
+        if t:
+            paras.append(t)
+
+    return _parse_transcript_paragraphs(paras, filename=filename)
+
+
+def _parse_doc(content: bytes, filename: str = "") -> Tuple[List[Dict[str, Any]], List[str]]:
+    """Parse Microsoft Word (.doc) document, HTML-based Word, or RTF transcript."""
+    # 1. Check if it's a .docx zip file renamed to .doc
+    if content.startswith(b"PK\x03\x04"):
+        return _parse_docx(content, filename=filename)
+
+    decoded = _decode_bytes(content)
+
+    # 2. Check if it is HTML-formatted Word document
+    if "<html" in decoded.lower() or "<w:worddocument" in decoded.lower():
+        clean = re.sub(r"(?i)<(p|br|tr|div|h[1-6])[^>]*>", "\n\n", decoded)
+        clean = re.sub(r"<[^>]+>", " ", clean)
+        clean = (
+            clean.replace("&quot;", '"')
+            .replace("&amp;", "&")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&rsquo;", "'")
+            .replace("&#39;", "'")
+            .replace("&nbsp;", " ")
+        )
+        paras = [p.strip() for p in re.split(r"\n\s*\n", clean) if p.strip()]
+        return _parse_transcript_paragraphs(paras, filename=filename)
+
+    # 3. Check if it is RTF
+    if content.startswith(b"{\\rtf"):
+        clean = re.sub(r"\\[a-zA-Z0-9\-]+ ?|\{|\}", " ", decoded)
+        paras = [p.strip() for p in re.split(r"\n\s*\n", clean) if p.strip()]
+        return _parse_transcript_paragraphs(paras, filename=filename)
+
+    # 4. Fallback for binary Word 97-2003 (extract textual strings)
+    strings = re.findall(r"[\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF]{15,}", decoded)
+    clean_paras = [
+        s.strip()
+        for s in strings
+        if not s.strip().startswith("Microsoft") and not s.strip().startswith("Word.Document")
+    ]
+    if clean_paras:
+        return _parse_transcript_paragraphs(clean_paras, filename=filename)
+
+    raise ValueError("Unable to extract text from .doc file. Please save as .docx or .pdf.")
+
+
+def _parse_pdf(content: bytes, filename: str = "") -> Tuple[List[Dict[str, Any]], List[str]]:
+    """Parse PDF interview transcript into structured records using PyPDF2."""
+    try:
+        import PyPDF2
+
+        reader = PyPDF2.PdfReader(io.BytesIO(content))
+        pages_text: List[str] = []
+        for page in reader.pages:
+            txt = page.extract_text()
+            if txt:
+                pages_text.append(txt)
+        full_text = "\n\n".join(pages_text).strip()
+    except Exception as exc:
+        raise ValueError(f"Unable to read PDF file: {exc}")
+
+    if not full_text:
+        raise ValueError("The uploaded PDF file contains no readable text (it may be a scanned image or empty).")
+
+    raw_paras = [p.strip() for p in re.split(r"\n\s*\n", full_text) if p.strip()]
+    if len(raw_paras) <= 1:
+        raw_paras = [line.strip() for line in full_text.splitlines() if line.strip()]
+
+    return _parse_transcript_paragraphs(raw_paras, filename=filename)
 
 
 def _decode_bytes(content: bytes) -> str:
@@ -549,6 +628,7 @@ def export_results(analysis_result: Dict[str, Any], fmt: str = "csv") -> Tuple[b
             "Row": r.get("row_index"),
             "Identifier": r.get("identifier"),
             "Respondent_Group": r.get("respondent_group", ""),
+            "Taglish_Detected": "Yes" if r.get("is_taglish") else "No",
             "Primary_Theme": r.get("primary_theme"),
             "Secondary_Theme": r.get("secondary_theme") or "",
             "Theme_Confidence": r.get("theme_confidence"),
@@ -556,14 +636,13 @@ def export_results(analysis_result: Dict[str, Any], fmt: str = "csv") -> Tuple[b
             "Emergent_Cluster": r.get("emergent_cluster") or "",
             "Trajectory_Tone": r.get("trajectory_tone") or "",
             "DistilBERT_Prediction": r.get("distilbert_label"),
-            "Final_Outcome_Status": r.get("final_status"),
+            "Governance_Status": r.get("governance_status") or r.get("final_status"),
             "Governance_Trajectory": r.get("governance_status") or r.get("final_status"),
-            "DistilBERT_Confidence": r.get("confidence"),
-            "Prob_Employed": probs.get("employed", 0.0),
-            "Prob_Underemployed": probs.get("underemployed", 0.0),
-            "Prob_Unemployed": probs.get("unemployed", 0.0),
-            "Degree_Aligned": r.get("alignment", {}).get("aligned", False),
-            "Alignment_Reason": r.get("alignment", {}).get("reason", ""),
+            "Prob_Sustained": probs.get("sustained", 0.0),
+            "Prob_Constrained": probs.get("constrained", 0.0),
+            "Prob_Deficient": probs.get("deficient", 0.0),
+            "Institutionalized": r.get("alignment", {}).get("aligned", False),
+            "Trajectory_Rationale": r.get("alignment", {}).get("reason", ""),
             "Token_Count": r.get("token_count"),
             "Latency_ms": r.get("latency_ms"),
             "Standardized_Input": r.get("input_text"),
@@ -583,7 +662,7 @@ def export_results(analysis_result: Dict[str, Any], fmt: str = "csv") -> Tuple[b
         themes_el = ET.SubElement(root, "ThemeDistribution")
         for t in analysis_result.get("theme_distribution", []):
             t_el = ET.SubElement(themes_el, "Theme")
-            for k in ("theme", "count", "percentage", "employed", "underemployed", "unemployed"):
+            for k in ("theme", "count", "percentage", "sustained", "constrained", "deficient"):
                 c = ET.SubElement(t_el, k)
                 c.text = str(t.get(k, ""))
 
@@ -626,6 +705,10 @@ def export_results(analysis_result: Dict[str, Any], fmt: str = "csv") -> Tuple[b
             "distilbert_thematic_analysis.xlsx",
         )
 
+    if fmt_clean in ("doc", "docx"):
+        html = _generate_word_export(analysis_result, flat_rows)
+        return html.encode("utf-8"), "application/msword", "distilbert_thematic_analysis_report.doc"
+
     # Default: CSV
     output_str = io.StringIO()
     if flat_rows:
@@ -633,3 +716,168 @@ def export_results(analysis_result: Dict[str, Any], fmt: str = "csv") -> Tuple[b
         writer.writeheader()
         writer.writerows(flat_rows)
     return output_str.getvalue().encode("utf-8-sig"), "text/csv", "distilbert_thematic_analysis.csv"
+
+
+def _generate_word_export(analysis_result: Dict[str, Any], flat_rows: List[Dict[str, Any]]) -> str:
+    """Generate professional Microsoft Word (.doc) report for Tab 2 Dashboard and Tab 3 Coded Corpus."""
+    summary = analysis_result.get("summary") or {}
+    themes = analysis_result.get("theme_distribution") or []
+    cross_case = analysis_result.get("cross_case_matrix")
+    matrix_rows = cross_case.get("rows") if isinstance(cross_case, dict) else (cross_case or [])
+
+    total_records = summary.get("total_records", len(flat_rows))
+    dominant_theme = summary.get("dominant_theme", "—")
+    inst_rate = summary.get("employment_rate", 0.0)
+    mean_conf = summary.get("mean_confidence", 0.0)
+
+    html_parts = [
+        """<!DOCTYPE html>
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+  <meta charset='utf-8'>
+  <title>SGLG Thematic Analysis Synthesis Report</title>
+  <style>
+    body { font-family: 'Calibri', 'Times New Roman', serif; font-size: 11pt; line-height: 1.5; color: #111827; }
+    h1 { font-size: 18pt; color: #1e293b; margin-bottom: 4pt; border-bottom: 2pt solid #334155; padding-bottom: 4pt; }
+    h2 { font-size: 14pt; color: #334155; margin-top: 18pt; margin-bottom: 8pt; border-bottom: 1pt solid #cbd5e1; padding-bottom: 3pt; }
+    p.lead { font-size: 12pt; color: #475569; margin-top: 0; margin-bottom: 14pt; font-style: italic; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8pt; margin-bottom: 16pt; font-size: 10pt; }
+    th { background-color: #f1f5f9; color: #0f172a; font-weight: bold; padding: 7pt 9pt; border: 1pt solid #cbd5e1; text-align: left; }
+    td { padding: 6pt 9pt; border: 1pt solid #cbd5e1; vertical-align: top; }
+    tr:nth-child(even) td { background-color: #f8fafc; }
+    .kpi-table th { background-color: #e2e8f0; }
+    .badge { display: inline-block; padding: 2pt 6pt; font-size: 9pt; font-weight: bold; border-radius: 3pt; }
+    .badge-sustained { background-color: #dcfce7; color: #166534; }
+    .badge-constrained { background-color: #fef9c3; color: #854d0e; }
+    .badge-deficient { background-color: #fee2e2; color: #991b1b; }
+    .quote-box { background-color: #f8fafc; border-left: 3pt solid #475569; padding: 8pt 12pt; font-style: italic; margin: 6pt 0; }
+  </style>
+</head>
+<body>
+  <h1>SGLG Local Governance Thematic Analysis: Empirical Studio Report</h1>
+  <p class="lead">DistilBERT Sequence Inference &amp; Qualitative Thematic Synthesis · Study 3 (Moving Beyond Paper Compliance)</p>
+
+  <h2>1. Executive Analytics &amp; Institutionalization Overview</h2>
+  <table class="kpi-table">
+    <tr>
+      <th>Metric</th>
+      <th>Value</th>
+      <th>Methodological Description</th>
+    </tr>
+    <tr>
+      <td><strong>Total Analyzed Excerpts</strong></td>
+      <td><strong>"""
+        + str(total_records)
+        + """</strong></td>
+      <td>Interview quotes, field observations, and transcripts processed by DistilBERT</td>
+    </tr>
+    <tr>
+      <td><strong>Dominant Emergent Theme</strong></td>
+      <td><strong>"""
+        + str(dominant_theme)
+        + """</strong></td>
+      <td>Most frequent governance pattern across participating LGUs</td>
+    </tr>
+    <tr>
+      <td><strong>Governance Institutionalization Rate</strong></td>
+      <td><strong>"""
+        + str(inst_rate)
+        + """%</strong></td>
+      <td>Proportion of practices sustained outside the formal DILG assessment cycle</td>
+    </tr>
+    <tr>
+      <td><strong>Mean Softmax Confidence</strong></td>
+      <td><strong>"""
+        + str(mean_conf)
+        + """%</strong></td>
+      <td>Average multi-class probability assigned by 6-layer DistilBERT encoder</td>
+    </tr>
+  </table>
+
+  <h2>2. Theme Frequency &amp; Percentage Distribution</h2>
+  <table>
+    <tr>
+      <th style="width:50%;">Core Governance Theme</th>
+      <th style="width:15%; text-align:center;">Count</th>
+      <th style="width:15%; text-align:center;">Percentage</th>
+      <th style="width:20%;">Institutional Trajectory</th>
+    </tr>
+"""
+    ]
+
+    for t in themes:
+        html_parts.append(
+            f"""    <tr>
+      <td><strong>{t.get('theme', '—')}</strong></td>
+      <td style="text-align:center;">{t.get('count', 0)}</td>
+      <td style="text-align:center;">{t.get('percentage', 0)}%</td>
+      <td>Sustained: {t.get('sustained', 0)} | Constrained: {t.get('constrained', 0)} | Deficient: {t.get('deficient', 0)}</td>
+    </tr>"""
+        )
+
+    html_parts.append(
+        """  </table>
+"""
+    )
+
+    if matrix_rows:
+        html_parts.append(
+            """  <h2>3. Theme 3: Cross-Case Operational Barriers Comparison Matrix</h2>
+  <table>
+    <tr>
+      <th>Operational Barrier / Dimension</th>
+      <th>LGU-01 (Ambaguio)</th>
+      <th>LGU-02 (Peñablanca)</th>
+      <th>LGU-03</th>
+      <th>Institutional Adaptation</th>
+    </tr>
+"""
+        )
+        for r in matrix_rows:
+            html_parts.append(
+                f"""    <tr>
+      <td><strong>{r.get('dimension') or r.get('Barrier') or 'Dimension'}</strong></td>
+      <td>{r.get('lgu_01') or r.get('LGU-01') or '—'}</td>
+      <td>{r.get('lgu_02') or r.get('LGU-02') or '—'}</td>
+      <td>{r.get('lgu_03') or r.get('LGU-03') or '—'}</td>
+      <td><em>{r.get('adaptation') or r.get('Institutional Adaptation') or '—'}</em></td>
+    </tr>"""
+            )
+        html_parts.append(
+            """  </table>
+"""
+        )
+
+    html_parts.append(
+        """  <h2>4. Coded Corpus &amp; Deep Evidence Database</h2>
+  <table>
+    <tr>
+      <th style="width:12%;">Identifier &amp; Role</th>
+      <th style="width:12%;">Case LGU</th>
+      <th style="width:22%;">Primary Assigned Theme</th>
+      <th style="width:10%; text-align:center;">Confidence</th>
+      <th style="width:44%;">Verbatim Qualitative Quote Excerpt</th>
+    </tr>
+"""
+    )
+
+    for r in flat_rows:
+        conf = r.get("Theme_Confidence")
+        conf_str = f"{conf:.1f}%" if isinstance(conf, (int, float)) else str(conf or "—")
+        quote = (r.get("Standardized_Input") or "").replace("<", "&lt;").replace(">", "&gt;")
+        html_parts.append(
+            f"""    <tr>
+      <td><strong>{r.get('Identifier', '—')}</strong><br><small style="color:#64748b;">{r.get('Office_Role', '')}</small></td>
+      <td>{r.get('LGU_Case', '—')}</td>
+      <td><strong>{r.get('Primary_Theme', '—')}</strong><br><small style="color:#475569;">Trajectory: {r.get('Governance_Status', '—')}</small></td>
+      <td style="text-align:center;">{conf_str}</td>
+      <td><div class="quote-box">“{quote}”</div></td>
+    </tr>"""
+        )
+
+    html_parts.append(
+        """  </table>
+</body>
+</html>"""
+    )
+    return "".join(html_parts)

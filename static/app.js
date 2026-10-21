@@ -2,15 +2,15 @@
 'use strict';
 
 const $ = (id) => document.getElementById(id);
-const state = { parsed: null, analysis: null, themes: [], lastRequest: null, busy: false };
+const state = { parsed: null, analysis: null, themes: [], lastRequest: null, busy: false, narrative: null, narrativeCase: 'all' };
 const fields = [
-  ['full_name', 'Identifier / Record Name'],
-  ['headline', 'Headline / Short Summary'],
-  ['current_position', 'Position / Primary Role'],
-  ['current_company', 'Company / Workplace / Source'],
-  ['degree_program', 'Degree Program / Discipline'],
-  ['skills', 'Skills / Competencies / Keywords'],
-  ['about', 'Narrative / Response / Open-Ended Text'],
+  ['full_name', 'Identifier / Participant ID'],
+  ['headline', 'Subtheme / Interview Topic'],
+  ['current_position', 'Office / Role / Designation'],
+  ['current_company', 'LGU / City / Municipality'],
+  ['degree_program', 'Governance Area / SGLG Pillar'],
+  ['skills', 'Indicators / Criteria / Operational Codes'],
+  ['about', 'Narrative Quote / Transcript Excerpt'],
 ];
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -44,6 +44,9 @@ function setBusy(value) {
 window.switchTab = function (name) {
   document.querySelectorAll('.nav-tab').forEach(el => el.classList.toggle('active', el.dataset.tab === name));
   document.querySelectorAll('.tab-panel').forEach(el => el.classList.toggle('active', el.id === `tab-${name}`));
+  if (name === 'narrative' && state.analysis && !state.narrative) {
+    fetchNarrative(state.narrativeCase || 'all');
+  }
 };
 window.toggleThemeMode = function () {
   const light = document.documentElement.dataset.theme !== 'light';
@@ -70,8 +73,13 @@ function showParsed(data) {
 }
 window.clearUploadedFile = function () {
   state.parsed = null;
+  state.analysis = null;
+  state.narrative = null;
   $('fileInput').value = '';
   $('uploadPreviewBox').style.display = 'none';
+  if ($('narrativeEmptyPlaceholder')) $('narrativeEmptyPlaceholder').style.display = '';
+  if ($('narrativeManuscriptBox')) $('narrativeManuscriptBox').style.display = 'none';
+  if ($('narrativeBadge')) $('narrativeBadge').textContent = '0';
 };
 async function upload(files) {
   if (!files) return;
@@ -119,12 +127,13 @@ function renderAll() {
   $('kpiTotalLatency').textContent = `${number(summary.total_latency_ms)} ms total inference time`;
   $('kpiDominantTheme').textContent = summary.dominant_theme;
   $('kpiThemeCountSub').textContent = `Across ${state.themes.length} codebook themes`;
-  const sustained = summary.sustained_count !== undefined ? summary.sustained_count : summary.employed_count;
-  const constrained = summary.constrained_count !== undefined ? summary.constrained_count : summary.underemployed_count;
-  const deficient = summary.deficient_count !== undefined ? summary.deficient_count : summary.unemployed_count;
-  const rate = summary.institutionalization_rate !== undefined ? summary.institutionalization_rate : summary.employment_alignment_rate;
+  const sustained = summary.sustained_count || 0;
+  const constrained = summary.constrained_count || 0;
+  const deficient = summary.deficient_count || 0;
+  const rate = summary.institutionalization_rate || 0;
 
-  $('kpiEmploymentRate').textContent = `${number(rate)}%`;
+  if ($('kpiEmploymentRate')) $('kpiEmploymentRate').textContent = `${number(rate)}%`;
+  if ($('kpiInstitutionalizationRate')) $('kpiInstitutionalizationRate').textContent = `${number(rate)}%`;
   $('kpiOutcomeCounts').textContent = `${sustained} Sustained · ${constrained} Constrained · ${deficient} Deficient`;
   $('kpiMeanConfidence').textContent = `${number(summary.mean_confidence_pct)}%`;
   $('kpiAvgLatency').textContent = `${number(summary.avg_latency_ms, 2)} ms`;
@@ -195,9 +204,9 @@ function renderAll() {
   }
   $('themeDistributionChart').innerHTML = analysis.theme_distribution.map(theme => `<div class="theme-bar-row"><div class="theme-bar-top"><span>${esc(theme.theme)}</span><span>${theme.count} · ${number(theme.percentage)}%</span></div><div class="theme-bar-track"><div class="theme-bar-fill" style="width:${Math.min(100, theme.percentage)}%;background:${esc(theme.color)}"></div></div><div class="theme-kw-pills">${(theme.top_keywords || []).slice(0, 5).map(k => `<span class="kw-pill">${esc(k.term)}</span>`).join('')}</div></div>`).join('') || '<p>No themes detected.</p>';
   $('crossTabTable').querySelector('tbody').innerHTML = analysis.theme_distribution.map(t => {
-    const sust = t.sustained !== undefined ? t.sustained : t.employed;
-    const constr = t.constrained !== undefined ? t.constrained : t.underemployed;
-    const defic = t.deficient !== undefined ? t.deficient : t.unemployed;
+    const sust = t.sustained || 0;
+    const constr = t.constrained || 0;
+    const defic = t.deficient || 0;
     const pct = t.count ? number(sust / t.count * 100, 0) : 0;
     return `<tr>
       <td><strong style="color:var(--text-primary);">${esc(t.theme)}</strong></td>
@@ -211,12 +220,25 @@ function renderAll() {
   $('emergentClustersContainer').innerHTML = (analysis.emergent_clusters || []).map(c => `<div class="cluster-item"><strong>${esc(c.label)}</strong><span>${c.size} records · ${esc(c.dominant_outcome)}</span><small>${esc((c.top_terms || []).join(' · '))}</small></div>`).join('') || '<p>At least three substantive records are needed for clustering.</p>';
   $('globalKeyphrasesContainer').innerHTML = `<div class="theme-kw-pills">${(analysis.global_tfidf_keyphrases || []).map(k => `<span class="kw-pill">${esc(k.term)} <b>${number(k.weight, 2)}</b></span>`).join('')}</div><h4>Matched codebook phrases</h4><div class="theme-kw-pills">${(analysis.top_matched_codes || []).map(k => `<span class="kw-pill">${esc(k.code)} (${k.count})</span>`).join('')}</div>`;
   updateFilters(); renderRecordsTable();
+  if ($('narrativeBadge')) $('narrativeBadge').textContent = summary.total_records;
+  if ($('narrativeCaseFilterSelect') && analysis.records) {
+    const lguSet = new Set();
+    analysis.records.forEach(r => {
+      const v = r.company || r.lgu || (r.raw_record && (r.raw_record.current_company || r.raw_record.lgu));
+      if (v) lguSet.add(v);
+    });
+    const lgus = Array.from(lguSet).sort();
+    const curVal = $('narrativeCaseFilterSelect').value;
+    $('narrativeCaseFilterSelect').innerHTML = `<option value="all">All Participating LGUs (${lgus.length} Cases)</option>` + lgus.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    if (lgus.includes(curVal)) $('narrativeCaseFilterSelect').value = curVal;
+  }
+  fetchNarrative(state.narrativeCase || 'all');
 }
 function statusBadge(status) {
-  if (status === 'employed' || status === 'sustained') {
+  if (status === 'sustained') {
     return `<span class="status-badge status-sustained">Sustained</span>`;
   }
-  if (status === 'underemployed' || status === 'constrained') {
+  if (status === 'constrained') {
     return `<span class="status-badge status-constrained">Constrained</span>`;
   }
   return `<span class="status-badge status-deficient">Deficient</span>`;
@@ -255,10 +277,10 @@ window.renderRecordsTable = function () {
   );
   $('codedRecordsTable').querySelector('tbody').innerHTML = rows.map(row => `<tr>
     <td>${row.row_index}</td>
-    <td><strong>${esc(row.identifier)}</strong><br><small>${esc(row.position || '—')}</small></td>
+    <td><strong>${esc(row.identifier)}</strong>${row.is_taglish ? '<span class="badge" style="background:#0ea5e920;color:#0284c7;border:1px solid #0284c7;font-size:10px;margin-left:5px;padding:1px 5px;" title="Taglish Detected">Taglish</span>' : ''}<br><small>${esc(row.position || '—')}</small></td>
     <td>${groupBadge(row.respondent_group)}</td>
-    <td><span class="theme-chip">${esc(row.primary_theme)}</span><br><small>${esc(row.secondary_theme || '')}</small></td>
-    <td>${esc((row.matched_codes || []).join(', ') || '—')}</td>
+    <td><span class="theme-chip" style="background:${row.primary_theme_color ? row.primary_theme_color + '22' : 'var(--accent-glow)'}; color:${row.primary_theme_color || 'var(--accent)'}; border-color:${row.primary_theme_color || 'var(--accent)'};">${esc(row.primary_theme)}</span><br><small>${esc(row.secondary_theme || '')}</small></td>
+    <td>${(row.matched_codes || []).map(c => c.startsWith('[Emergent]') ? `<span style="display:inline-block; margin:2px; padding:1px 6px; border-radius:4px; background:#fef3c7; color:#92400e; font-size:11px; font-weight:600;">${esc(c)}</span>` : `<span style="display:inline-block; margin:2px; padding:1px 6px; border-radius:4px; background:#f1f5f9; color:#334155; font-size:11px;">${esc(c)}</span>`).join('') || '—'}</td>
     <td>${esc(row.emergent_cluster || '—')}</td>
     <td>${statusBadge(row.final_status)}</td>
     <td>${number(row.confidence * 100)}%</td>
@@ -272,14 +294,15 @@ window.openInspector = function (rowIndex) {
   $('modalRecordTitle').textContent = `${row.identifier} · Deep Inspector`;
   const probabilities = Object.entries(row.probabilities || {}).map(([label, probability]) => {
     let govLabel = label;
-    if (label === 'employed') govLabel = 'Sustained / Institutionalized';
-    else if (label === 'underemployed') govLabel = 'Constrained / In-Progress';
-    else if (label === 'unemployed') govLabel = 'Deficient / Unaligned';
+    if (label === 'sustained') govLabel = 'Sustained / Institutionalized';
+    else if (label === 'constrained') govLabel = 'Constrained / In-Progress';
+    else if (label === 'deficient') govLabel = 'Deficient / Unaligned';
     return `<div class="probability-row"><span>${esc(govLabel)}</span><div class="theme-bar-track"><div class="theme-bar-fill" style="width:${probability * 100}%;background:var(--accent)"></div></div><b>${number(probability * 100)}%</b></div>`;
   }).join('');
   const tokens = (row.tokens_preview || []).map((token, i) => `<span class="token-chip ${token.startsWith('[') ? 'special' : ''}">${esc(token)}<span class="token-id">${esc(row.token_ids_preview?.[i])}</span></span>`).join('');
-  const govStatus = row.governance_status || (row.final_status === 'employed' ? 'Sustained / Institutionalized' : (row.final_status === 'underemployed' ? 'Constrained / In-Progress' : 'Deficient / Unaligned'));
-  $('modalInspectorBody').innerHTML = `<div class="inspector-grid"><div><h4>Standardized qualitative input</h4><p class="inspector-text">${esc(row.input_text)}</p><h4>DistilBERT sequence output</h4><p>Governance Trajectory: <strong>${esc(govStatus)}</strong>${row.hybrid_override ? ' · Hybrid rule active' : ''}</p><p>Raw logits: ${esc((row.logits || []).join(' · '))}</p>${probabilities}<p>${row.token_count} tokens · ${number(row.latency_ms, 2)} ms</p></div><div><h4>Thematic coding</h4><p>Primary: <strong>${esc(row.primary_theme)}</strong></p><p>Secondary: ${esc(row.secondary_theme || 'None')}</p><p>Respondent group: <strong>${groupBadge(row.respondent_group)}</strong></p><p>Matched codes: ${esc((row.matched_codes || []).join(', ') || 'None')}</p><p>Governance trajectory tone: <strong>${esc(row.trajectory_tone || 'Standard')}</strong></p><label class="form-label" for="manualThemeSelect">Manual theme override</label><select id="manualThemeSelect" class="select">${state.themes.map(t => `<option value="${esc(t.id)}" ${row.primary_theme_id === t.id ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select><button class="btn btn-primary btn-sm" onclick="applyThemeOverride(${row.row_index})">Apply override</button></div></div><h4>WordPiece subword token preview</h4><div class="token-list">${tokens}</div>`;
+  const govStatus = row.governance_status || (row.final_status === 'sustained' ? 'Sustained / Institutionalized' : (row.final_status === 'constrained' ? 'Constrained / In-Progress' : 'Deficient / Unaligned'));
+  const matchedCodesList = (row.matched_codes || []).map(c => c.startsWith('[Emergent]') ? `<span style="display:inline-block; margin:2px; padding:2px 8px; border-radius:12px; background:#fef3c7; color:#92400e; font-size:11px; font-weight:700;">${esc(c)}</span>` : `<span style="display:inline-block; margin:2px; padding:2px 8px; border-radius:12px; background:#e0f2fe; color:#0369a1; font-size:11px; font-weight:600;">${esc(c)}</span>`).join(' ') || 'None';
+  $('modalInspectorBody').innerHTML = `<div class="inspector-grid"><div><h4>Standardized qualitative input</h4><p class="inspector-text">${esc(row.input_text)}</p><h4>DistilBERT sequence output</h4><p>Governance Trajectory: <strong>${esc(govStatus)}</strong>${row.hybrid_override ? ' · Hybrid rule active' : ''}</p><p>Language: <strong>${row.is_taglish ? '<span style="color:#0284c7;">Taglish (Morphological Normalizer Active)</span>' : '<span style="color:var(--text-secondary);">English</span>'}</strong></p><p>Raw logits: ${esc((row.logits || []).join(' · '))}</p>${probabilities}<p>${row.token_count} tokens · ${number(row.latency_ms, 2)} ms</p></div><div><h4>Thematic coding</h4><p>Primary: <strong>${esc(row.primary_theme)}</strong></p><p>Secondary: ${esc(row.secondary_theme || 'None')}</p><p>Respondent group: <strong>${groupBadge(row.respondent_group)}</strong></p><p>Matched codes: ${matchedCodesList}</p><p>Governance trajectory tone: <strong>${esc(row.trajectory_tone || 'Standard')}</strong></p><label class="form-label" for="manualThemeSelect">Manual theme override</label><select id="manualThemeSelect" class="select">${state.themes.map(t => `<option value="${esc(t.id)}" ${row.primary_theme_id === t.id ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select><button class="btn btn-primary btn-sm" onclick="applyThemeOverride(${row.row_index})">Apply override</button></div></div><h4>WordPiece subword token preview</h4><div class="token-list">${tokens}</div>`;
   $('inspectorModal').classList.add('open');
 };
 window.closeInspectorModal = function () { $('inspectorModal').classList.remove('open'); };
@@ -296,7 +319,7 @@ function rebuildThemeSummary() {
   const analysis = state.analysis, rows = analysis.records;
   const counts = new Map();
   for (const row of rows) {
-    if (!counts.has(row.primary_theme)) counts.set(row.primary_theme, { theme: row.primary_theme, color: row.primary_theme_color, description: state.themes.find(t => t.name === row.primary_theme)?.description || '', count: 0, employed: 0, underemployed: 0, unemployed: 0, top_keywords: [] });
+    if (!counts.has(row.primary_theme)) counts.set(row.primary_theme, { theme: row.primary_theme, color: row.primary_theme_color, description: state.themes.find(t => t.name === row.primary_theme)?.description || '', count: 0, sustained: 0, constrained: 0, deficient: 0, top_keywords: [] });
     const theme = counts.get(row.primary_theme); theme.count++;
     if (Object.hasOwn(theme, row.final_status)) theme[row.final_status]++;
   }
@@ -331,13 +354,34 @@ function rebuildThemeSummary() {
 window.exportAnalysis = async function (format) {
   if (!state.analysis) return notify('Analyze records before exporting.', true);
   try {
+    setBusy(true);
     const response = await fetch('/api/export', jsonOptions({ format, analysis: state.analysis }));
-    if (!response.ok) { const body = await response.json(); throw new Error(body.detail || 'Export failed'); }
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.detail || 'Export failed');
+    }
     const blob = await response.blob();
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob); link.download = `sglg_thematic_analysis.${format}`;
-    link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-  } catch (error) { notify(error.message, true); }
+    link.href = URL.createObjectURL(blob);
+    const ext = (format === 'doc' || format === 'docx') ? 'doc' : format;
+    link.download = `sglg_thematic_analysis_report.${ext}`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    notify(`Exported ${format.toUpperCase()} report successfully.`);
+  } catch (error) {
+    notify(error.message, true);
+  } finally {
+    setBusy(false);
+  }
+};
+
+window.printCurrentTab = function () {
+  if (!state.analysis) {
+    return notify('Analyze records first before printing report.', true);
+  }
+  window.print();
 };
 
 window.loadSampleDataset = async function (format = 'csv') {
@@ -357,7 +401,7 @@ window.handlePresetSelect = async function (presetId) {
     const body = await api(`/api/presets/${presetId}`, { method: 'POST' });
     state.themes = body.themes;
     renderThemes();
-    notify(`Switched codebook preset to '${presetId === 'sglg_governance' ? "Teacher's SGLG Governance Study" : 'Alumni Career Tracer'}'`);
+    notify(`Switched codebook preset to '${body.name || "Teacher's SGLG Governance Study"}'`);
     if (state.lastRequest) await analyze(state.lastRequest);
   } catch (error) { notify(error.message, true); }
   finally { setBusy(false); }
@@ -442,7 +486,9 @@ function renderModel(model) {
     ['Runtime', model.runtime], ['Model directory', model.model_dir],
     ['Architecture', model.architecture], ['Layers', model.num_layers],
     ['Attention heads', model.num_attention_heads], ['Hidden dimensions', model.hidden_dim],
-    ['Vocabulary', model.vocab_size], ['Max input tokens', model.max_sequence_length],
+    ['Vocabulary', `${model.vocab_size} (WordPiece uncased)`], ['Max input tokens', model.max_sequence_length],
+    ['Taglish Linguistic Adapter', model.taglish_support?.active ? 'Active (Morphological Normalizer)' : 'Standard English'],
+    ['Affix Handling', model.taglish_support?.affix_handling ? 'nag-, mag-, pag-, na-, i-, -in-, -an' : 'None'],
   ];
   $('modelSpecsContainer').innerHTML = `<div class="spec-grid">${entries.map(([label, value]) => `<div><small>${esc(label)}</small><strong>${esc(value)}</strong></div>`).join('')}</div>${model.load_error ? `<p class="model-warning">${esc(model.load_error)}</p>` : ''}`;
   $('modelStatusText').textContent = model.loaded ? (model.runtime.startsWith('ONNX') ? 'ONNX Engine Ready' : 'PyTorch Engine Ready') : 'Heuristic Fallback Active';
@@ -469,3 +515,192 @@ async function initialize() {
   }
 }
 initialize();
+
+/* ==========================================================================
+   QUALITATIVE THEMATIC ANALYSIS NARRATIVE SYNTHESIS ENGINE
+   ========================================================================== */
+window.fetchNarrative = async function (caseFilter = 'all') {
+  if (!state.analysis) {
+    if ($('narrativeEmptyPlaceholder')) $('narrativeEmptyPlaceholder').style.display = '';
+    if ($('narrativeManuscriptBox')) $('narrativeManuscriptBox').style.display = 'none';
+    return;
+  }
+  try {
+    const res = await api('/api/narrative', jsonOptions({
+      analysis: state.analysis,
+      case_filter: caseFilter === 'all' ? null : caseFilter,
+    }));
+    state.narrative = res.data;
+    renderNarrative(res.data);
+  } catch (err) {
+    notify('Failed to generate narrative draft: ' + err.message, true);
+  }
+};
+
+window.renderNarrative = function (data) {
+  if (!data || !data.sections || !data.sections.length) {
+    if ($('narrativeEmptyPlaceholder')) $('narrativeEmptyPlaceholder').style.display = '';
+    if ($('narrativeManuscriptBox')) $('narrativeManuscriptBox').style.display = 'none';
+    return;
+  }
+  if ($('narrativeEmptyPlaceholder')) $('narrativeEmptyPlaceholder').style.display = 'none';
+  if ($('narrativeManuscriptBox')) $('narrativeManuscriptBox').style.display = '';
+
+  const meta = data.metadata || {};
+  const casesText = (meta.cases_analyzed || []).join(', ');
+
+  let html = `
+    <div class="manuscript-header">
+      <div class="manuscript-title">${esc(data.title)}</div>
+      <div class="manuscript-subtitle">${esc(data.subtitle)}</div>
+      <div class="manuscript-meta-box">
+        <div class="manuscript-meta-item">
+          <strong>Corpus Scope:</strong> <span>${meta.total_records || 0} Records</span>
+        </div>
+        <div class="manuscript-meta-item">
+          <strong>Cases Analyzed:</strong> <span>${esc(casesText || 'Multi-LGU')}</span>
+        </div>
+        <div class="manuscript-meta-item">
+          <strong>Dominant Theme:</strong> <span>${esc(meta.dominant_theme || '—')}</span>
+        </div>
+        <div class="manuscript-meta-item">
+          <strong>Institutionalization Rate:</strong> <span>${meta.institutionalization_rate || 0}% Sustained</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table of Analytical Sections -->
+    <div class="manuscript-toc">
+      <div class="manuscript-toc-title">Table of Analytical Sections</div>
+      <ul class="manuscript-toc-list">
+        ${data.sections.map(sec => `
+          <li>
+            <a class="manuscript-toc-link" href="#sec_${esc(sec.id)}">
+              <span style="font-weight:700;">${esc(sec.section_num)}</span>
+              <span>${esc(sec.title)}</span>
+            </a>
+          </li>
+        `).join('')}
+      </ul>
+    </div>
+  `;
+
+  // Render each section
+  data.sections.forEach(sec => {
+    const secColor = sec.color || '#6366f1';
+    html += `
+      <section class="manuscript-section" id="sec_${esc(sec.id)}">
+        <div class="manuscript-heading">
+          <span class="manuscript-num-badge" style="background:${secColor}20; color:${secColor};">${esc(sec.section_num)}</span>
+          <span>${esc(sec.title)}</span>
+        </div>
+    `;
+
+    if (sec.benchmark) {
+      html += `
+        <div class="manuscript-benchmark-callout" style="border-left-color:${secColor};">
+          <span class="manuscript-benchmark-tag">Core Analytic Proposition / Benchmark</span>
+          “${esc(sec.benchmark)}”
+        </div>
+      `;
+    }
+
+    if (sec.paragraphs && sec.paragraphs.length) {
+      sec.paragraphs.forEach(p => {
+        const cleanP = (p || '').replace(/\*\*/g, '').replace(/\*/g, '');
+        html += `<p class="manuscript-p">${esc(cleanP)}</p>`;
+      });
+    }
+
+    if (sec.quotes && sec.quotes.length) {
+      html += `<div class="manuscript-quotes-wrapper">`;
+      sec.quotes.forEach(q => {
+        html += `
+          <div class="manuscript-quote-card" style="border-left-color:${secColor};">
+            <div class="manuscript-quote-text">“${esc(q.quote)}”</div>
+            <div class="manuscript-quote-footer">
+              <div class="manuscript-participant-tag">
+                ${esc(q.participant_id)} <span class="manuscript-participant-meta">· ${esc(q.office_role)}, ${esc(q.lgu)}</span>
+              </div>
+              <span class="status-badge status-${esc(q.status.toLowerCase())}">${esc(q.status)}</span>
+            </div>
+          </div>
+        `;
+      });
+      html += `</div>`;
+    }
+
+    html += `</section>`;
+  });
+
+  $('narrativeContentContainer').innerHTML = html;
+};
+
+window.copyNarrativeDraft = async function () {
+  if (!state.narrative) {
+    return notify('Analyze a dataset first to generate narrative draft.', true);
+  }
+  try {
+    const rawText = state.narrative.plain_text || state.narrative.markdown || '';
+    const cleanText = rawText.replace(/\*\*/g, '').replace(/\*/g, '');
+    await navigator.clipboard.writeText(cleanText);
+    notify('Thematic Analysis Narrative Draft copied to clipboard! Ready to paste into Word or Google Docs.');
+  } catch (err) {
+    notify('Clipboard copy failed. Please use Download options.', true);
+  }
+};
+
+window.downloadNarrativeFile = async function (format) {
+  if (!state.analysis) {
+    return notify('Analyze a dataset first before exporting narrative.', true);
+  }
+  try {
+    setBusy(true);
+    const caseFilter = state.narrativeCase === 'all' ? null : state.narrativeCase;
+    const response = await fetch('/api/narrative/export', jsonOptions({
+      analysis: state.analysis,
+      format,
+      case_filter: caseFilter,
+    }));
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({}));
+      throw new Error(errBody.detail || 'Narrative export failed');
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const ext = format === 'doc' ? 'doc' : format;
+    a.download = `Thematic_Analysis_Narrative_Synthesis.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    notify(`Downloaded Thematic Analysis Narrative (${format.toUpperCase()}) successfully.`);
+  } catch (error) {
+    notify(error.message, true);
+  } finally {
+    setBusy(false);
+  }
+};
+
+window.printNarrativeManuscript = function () {
+  if (!state.narrative) {
+    return notify('Generate a narrative draft first before printing.', true);
+  }
+  window.print();
+};
+
+window.refreshNarrativeDraft = function () {
+  if (!state.analysis) {
+    return notify('Analyze a dataset first before regenerating narrative.', true);
+  }
+  fetchNarrative(state.narrativeCase || 'all');
+  notify('Regenerating Thematic Analysis narrative synthesis draft...');
+};
+
+window.onNarrativeCaseFilterChange = function () {
+  const sel = $('narrativeCaseFilterSelect');
+  state.narrativeCase = sel ? sel.value : 'all';
+  fetchNarrative(state.narrativeCase);
+};

@@ -80,6 +80,20 @@ class ExportRequest(BaseModel):
     analysis: Optional[Dict[str, Any]] = None
 
 
+class NarrativeRequest(BaseModel):
+    analysis: Optional[Dict[str, Any]] = None
+    case_filter: Optional[str] = None
+    depth: str = "comprehensive"
+
+
+class NarrativeExportRequest(BaseModel):
+    analysis: Optional[Dict[str, Any]] = None
+    format: str = "doc"
+    case_filter: Optional[str] = None
+    depth: str = "comprehensive"
+
+
+
 @app.get("/api/status")
 async def get_status():
     """Return DistilBERT model status, architecture specs, and active thematic codebook."""
@@ -249,8 +263,6 @@ async def load_or_download_sample(
 
     if sample_type == "xlsx":
         csv_path = SAMPLE_DIR / "sample_thematic_dataset.csv"
-        if not csv_path.exists():
-            csv_path = SAMPLE_DIR / "sample_alumni_themes.csv"
         df = pd.read_csv(csv_path, dtype=str, keep_default_na=False)
         buf = io.BytesIO()
         with pd.ExcelWriter(buf, engine="openpyxl") as writer:
@@ -278,8 +290,6 @@ async def load_or_download_sample(
     source_fname, media_type, download_fname = file_map[sample_type]
     fpath = SAMPLE_DIR / source_fname
     if not fpath.exists():
-        fpath = SAMPLE_DIR / source_fname.replace("sample_thematic_dataset", "sample_alumni_themes")
-    if not fpath.exists():
         raise HTTPException(status_code=404, detail=f"Template file {source_fname} not found")
 
     content = fpath.read_bytes()
@@ -301,7 +311,7 @@ async def export_analysis(req: ExportRequest):
     if not target:
         raise HTTPException(status_code=400, detail="No analysis results available to export.")
 
-    if req.format.lower() not in {"csv", "xlsx", "json", "xml"}:
+    if req.format.lower() not in {"csv", "xlsx", "json", "xml", "doc", "docx"}:
         raise HTTPException(status_code=400, detail="Unsupported export format.")
     payload, media_type, filename = export_results(target, fmt=req.format)
     return Response(
@@ -309,6 +319,59 @@ async def export_analysis(req: ExportRequest):
         media_type=media_type,
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@app.post("/api/narrative")
+async def generate_narrative(req: NarrativeRequest):
+    """Generate structured qualitative thematic analysis narrative synthesis draft."""
+    target = req.analysis or latest_analysis_cache
+    if not target:
+        raise HTTPException(status_code=400, detail="No analysis results available to synthesize narrative.")
+    draft = thematic_coder.generate_narrative_draft(
+        target,
+        case_filter=req.case_filter,
+        depth=req.depth,
+    )
+    return {"ok": True, "data": draft}
+
+
+@app.post("/api/narrative/export")
+async def export_narrative(req: NarrativeExportRequest):
+    """Export narrative draft as Word document (.doc), Markdown (.md), Plain text (.txt), or HTML."""
+    target = req.analysis or latest_analysis_cache
+    if not target:
+        raise HTTPException(status_code=400, detail="No analysis results available to export.")
+    draft = thematic_coder.generate_narrative_draft(
+        target,
+        case_filter=req.case_filter,
+        depth=req.depth,
+    )
+    fmt = req.format.lower().strip()
+    if fmt in ("doc", "docx"):
+        content = draft["html_document"].encode("utf-8")
+        media_type = "application/msword"
+        filename = "Qualitative_Thematic_Analysis_Narrative_Synthesis.doc"
+    elif fmt == "md":
+        content = draft["markdown"].encode("utf-8")
+        media_type = "text/markdown; charset=utf-8"
+        filename = "Qualitative_Thematic_Analysis_Narrative_Synthesis.md"
+    elif fmt == "txt":
+        content = draft["plain_text"].encode("utf-8")
+        media_type = "text/plain; charset=utf-8"
+        filename = "Qualitative_Thematic_Analysis_Narrative_Synthesis.txt"
+    elif fmt == "html":
+        content = draft["html_document"].encode("utf-8")
+        media_type = "text/html; charset=utf-8"
+        filename = "Qualitative_Thematic_Analysis_Narrative_Synthesis.html"
+    else:
+        raise HTTPException(status_code=400, detail=f"Unsupported narrative export format '{fmt}'")
+
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
 
 
 if STATIC_DIR.exists():

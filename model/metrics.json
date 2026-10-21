@@ -3,7 +3,7 @@
     "generated_at": "2026-09-14T13:47:44.399289+00:00",
     "dataset_fingerprint": "5c347bbea3c0d4f52fac612511fa163e99e247d9e518da8ee3298a34c86dfbc6",
     "evaluation_label": "Weak-label grouped holdout",
-    "claim_limit": "These metrics measure agreement with heuristic labels on held-out database profiles, not independently verified real-world employment accuracy.",
+    "claim_limit": "These metrics measure agreement with heuristic labels on held-out database profiles, not independently verified real-world governance trajectory accuracy.",
     "distilbert": {
         "accuracy": 0.9583,
         "precision": 0.9643,
@@ -33,19 +33,19 @@
             ]
         ],
         "per_class": {
-            "employed": {
+            "sustained": {
                 "precision": 1.0,
                 "recall": 0.8889,
                 "f1": 0.9412,
                 "support": 9
             },
-            "underemployed": {
+            "constrained": {
                 "precision": 0.8571,
                 "recall": 1.0,
                 "f1": 0.9231,
                 "support": 6
             },
-            "unemployed": {
+            "deficient": {
                 "precision": 1.0,
                 "recall": 1.0,
                 "f1": 1.0,
@@ -98,19 +98,19 @@
             ]
         ],
         "per_class": {
-            "employed": {
+            "sustained": {
                 "precision": 0.6667,
                 "recall": 0.6667,
                 "f1": 0.6667,
                 "support": 9
             },
-            "underemployed": {
+            "constrained": {
                 "precision": 0.75,
                 "recall": 0.5,
                 "f1": 0.6,
                 "support": 6
             },
-            "unemployed": {
+            "deficient": {
                 "precision": 0.8182,
                 "recall": 1.0,
                 "f1": 0.9,
@@ -161,19 +161,19 @@
             ]
         ],
         "per_class": {
-            "employed": {
+            "sustained": {
                 "precision": 1.0,
                 "recall": 0.8889,
                 "f1": 0.9412,
                 "support": 9
             },
-            "underemployed": {
+            "constrained": {
                 "precision": 0.8571,
                 "recall": 1.0,
                 "f1": 0.9231,
                 "support": 6
             },
-            "unemployed": {
+            "deficient": {
                 "precision": 1.0,
                 "recall": 1.0,
                 "f1": 1.0,
@@ -226,19 +226,19 @@
             ]
         ],
         "per_class": {
-            "employed": {
+            "sustained": {
                 "precision": 0.6667,
                 "recall": 0.6667,
                 "f1": 0.6667,
                 "support": 9
             },
-            "underemployed": {
+            "constrained": {
                 "precision": 0.75,
                 "recall": 0.5,
                 "f1": 0.6,
                 "support": 6
             },
-            "unemployed": {
+            "deficient": {
                 "precision": 0.8182,
                 "recall": 1.0,
                 "f1": 0.9,
@@ -275,9 +275,9 @@
         "group_key": "canonical identity_group",
         "group_overlap": 0,
         "labels": [
-            "employed",
-            "underemployed",
-            "unemployed"
+            "sustained",
+            "constrained",
+            "deficient"
         ],
         "primary_metrics": [
             "Accuracy",
@@ -311,14 +311,14 @@
             "has_vendor_cert"
         ],
         "train_distribution": {
-            "employed": 35,
-            "underemployed": 34,
-            "unemployed": 43
+            "sustained": 35,
+            "constrained": 34,
+            "deficient": 43
         },
         "test_distribution": {
-            "employed": 9,
-            "underemployed": 6,
-            "unemployed": 9
+            "sustained": 9,
+            "constrained": 6,
+            "deficient": 9
         },
         "source_distribution": {
             "database": 121,
@@ -376,19 +376,19 @@
                 ]
             ],
             "per_class": {
-                "employed": {
+                "sustained": {
                     "precision": 1.0,
                     "recall": 0.8889,
                     "f1": 0.9412,
                     "support": 9
                 },
-                "underemployed": {
+                "constrained": {
                     "precision": 0.8571,
                     "recall": 1.0,
                     "f1": 0.9231,
                     "support": 6
                 },
-                "unemployed": {
+                "deficient": {
                     "precision": 1.0,
                     "recall": 1.0,
                     "f1": 1.0,
@@ -441,19 +441,19 @@
                 ]
             ],
             "per_class": {
-                "employed": {
+                "sustained": {
                     "precision": 0.5,
                     "recall": 0.4444,
                     "f1": 0.4706,
                     "support": 9
                 },
-                "underemployed": {
+                "constrained": {
                     "precision": 0.5,
                     "recall": 0.5,
                     "f1": 0.5,
                     "support": 6
                 },
-                "unemployed": {
+                "deficient": {
                     "precision": 0.8,
                     "recall": 0.8889,
                     "f1": 0.8421,

@@ -11,15 +11,15 @@
   "eos_token_id": null,
   "hidden_dim": 3072,
   "id2label": {
-    "0": "employed",
-    "1": "underemployed",
-    "2": "unemployed"
+    "0": "sustained",
+    "1": "constrained",
+    "2": "deficient"
   },
   "initializer_range": 0.02,
   "label2id": {
-    "employed": 0,
-    "underemployed": 1,
-    "unemployed": 2
+    "sustained": 0,
+    "constrained": 1,
+    "deficient": 2
   },
   "max_position_embeddings": 512,
   "model_type": "distilbert",

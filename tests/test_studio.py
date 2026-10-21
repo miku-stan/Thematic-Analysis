@@ -25,11 +25,12 @@ class StudioTests(unittest.TestCase):
     def test_onnx_inference(self):
         self.assertTrue(distilbert_service.loaded, distilbert_service.load_error)
         result = distilbert_service.predict_single({
-            "headline": "Software engineer",
-            "current_position": "Backend Developer",
-            "degree_program": "Computer Science",
+            "office_role": "Municipal Planning and Development Coordinator",
+            "lgu": "Ambaguio",
+            "governance_area": "Financial Administration & Sustainability",
+            "narrative_quote": "We institutionalized year-round documentation and continuous tracking across departments.",
         })
-        self.assertEqual(set(result["probabilities"]), {"employed", "underemployed", "unemployed"})
+        self.assertEqual(set(result["probabilities"]), {"sustained", "constrained", "deficient"})
         self.assertAlmostEqual(sum(result["probabilities"].values()), 1.0, places=3)
         self.assertEqual(result["tokens_preview"][0], "[CLS]")
         self.assertGreater(result["latency_ms"], 0)
@@ -44,8 +45,6 @@ class StudioTests(unittest.TestCase):
                     content = self.client.get("/api/samples/xlsx?download=true").content
                 else:
                     sample_file = ROOT / "sample_data" / f"sample_thematic_dataset.{extension}"
-                    if not sample_file.exists():
-                        sample_file = ROOT / "sample_data" / f"sample_alumni_themes.{extension}"
                     content = sample_file.read_bytes()
                 parsed = self.client.post("/api/parse", files={"file": (f"sample.{extension}", content)})
                 self.assertEqual(parsed.status_code, 200, parsed.text)
@@ -68,7 +67,7 @@ class StudioTests(unittest.TestCase):
         self.assertEqual(len(analysis["records"]), sample["total_rows"])
         self.assertTrue(analysis["theme_distribution"])
         self.assertTrue(analysis["global_tfidf_keyphrases"])
-        for fmt in ("csv", "xlsx", "json", "xml"):
+        for fmt in ("csv", "xlsx", "json", "xml", "doc"):
             with self.subTest(format=fmt):
                 result = self.client.post("/api/export", json={"format": fmt, "analysis": analysis})
                 self.assertEqual(result.status_code, 200, result.text)
@@ -78,14 +77,17 @@ class StudioTests(unittest.TestCase):
                     self.assertEqual(len(ET.fromstring(result.content).find("CodedRecords")), sample["total_rows"])
                 elif fmt == "json":
                     self.assertEqual(len(result.json()["records"]), sample["total_rows"])
+                elif fmt == "doc":
+                    self.assertIn(b"Executive Analytics", result.content)
+                    self.assertIn(b"<table", result.content)
                 else:
                     self.assertIn(b"Primary_Theme", result.content)
         self.assertEqual(self.client.post("/api/export", json={"format": "exe"}).status_code, 400)
         self.assertEqual(self.client.post("/api/analyze", json={"raw_text": " "}).status_code, 400)
-        self.assertEqual(self.client.post("/api/analyze", json={"raw_text": "Data analyst", "n_clusters": 100}).status_code, 400)
+        self.assertEqual(self.client.post("/api/analyze", json={"raw_text": "Mayor executive order", "n_clusters": 100}).status_code, 400)
 
     def test_direct_text_and_codebook(self):
-        response = self.client.post("/api/analyze", json={"raw_text": "Data analyst working with Python\nFresh graduate seeking work", "split_mode": "lines"})
+        response = self.client.post("/api/analyze", json={"raw_text": "Mayor executive order institutionalized SOP\nCompliance cramming and rushed folder preparation", "split_mode": "lines"})
         self.assertEqual(response.status_code, 200, response.text)
         self.assertEqual(response.json()["data"]["summary"]["total_records"], 2)
         custom = [{"id": "custom_qa", "name": "Quality assurance", "color": "#345678", "keywords": ["testing"]}]
@@ -148,6 +150,39 @@ class StudioTests(unittest.TestCase):
         for g in RESPONDENT_GROUPS:
             self.assertIn(g, df_rgb.columns)
 
+    def test_taglish_and_emergent_coding(self):
+        from engine.thematic_coder import DOMAIN_STOP_WORDS
+
+        # 1. Tagalog stop words verification
+        self.assertIn("ang", DOMAIN_STOP_WORDS)
+        self.assertIn("mga", DOMAIN_STOP_WORDS)
+        self.assertIn("dahil", DOMAIN_STOP_WORDS)
+
+        # 2. Taglish morphological matching
+        taglish_res = self.client.post("/api/analyze", json={
+            "raw_text": "Nag-cramming kami bago dumating ang DILG dahil kinulang sa tao at pondo.",
+            "split_mode": "single",
+        })
+        self.assertEqual(taglish_res.status_code, 200)
+        data = taglish_res.json()["data"]
+        rec = data["records"][0]
+        self.assertTrue(rec.get("is_taglish"))
+        self.assertIn("Theme 3", rec["primary_theme"])
+        matched_str = " ".join(rec["matched_codes"]).lower()
+        self.assertTrue(any(k in matched_str for k in ["cramming", "kulang sa tao", "pondo", "kakulangan"]))
+
+        # 3. Emergent candidate code extraction for unassigned records
+        unmatched_res = self.client.post("/api/analyze", json={
+            "raw_text": "Coastal mangrove reforestation and solar streetlight maintenance.",
+            "split_mode": "single",
+        })
+        self.assertEqual(unmatched_res.status_code, 200)
+        unmatched_rec = unmatched_res.json()["data"]["records"][0]
+        self.assertEqual(unmatched_rec["primary_theme"], "Unassigned / Needs Review")
+        self.assertTrue(len(unmatched_rec["matched_codes"]) > 0)
+        self.assertTrue(any("[Emergent]" in c for c in unmatched_rec["matched_codes"]))
+
 
 if __name__ == "__main__":
     unittest.main()
+

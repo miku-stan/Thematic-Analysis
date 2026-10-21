@@ -24,34 +24,127 @@ try:
 except ImportError:
     AutoTokenizer = None
 
+from engine.taglish_normalizer import is_taglish_text, normalize_taglish_text
+
 
 DEFAULT_ID2LABEL = {
-    0: "employed",
-    1: "underemployed",
-    2: "unemployed",
+    0: "sustained",
+    1: "constrained",
+    2: "deficient",
 }
 
-UNEMPLOYED_KEYWORDS = [
-    "unemployed",
-    "looking for job",
-    "looking for opportunities",
-    "seeking opportunities",
-    "actively seeking",
-    "seeking entry-level",
-    "seeking roles",
-    "job hunter",
-    "job seeker",
-    "job hunting",
-    "open to work",
-    "open to opportunities",
-    "fresh graduate",
-    "student at",
-    "undergraduate",
-    "attending",
-    "attended",
-    "immediately available",
-    "no current position",
-    "currently unemployed",
+DEFICIENT_KEYWORDS = [
+    "cramming",
+    "nag-cramming",
+    "nagcram",
+    "paper compliance",
+    "rush compliance",
+    "retroactive",
+    "backdated",
+    "inspection only",
+    "folder preparation",
+    "show for assessors",
+    "last minute",
+    "huling sandali",
+    "failed indicator",
+    "failed minimum",
+    "non-functional",
+    "ghost committee",
+    "ghost council",
+    "tabletop compliance",
+    "for compliance only",
+    "para sa compliance lang",
+    "window dressing",
+    "unaligned",
+    "audit observation memorandum",
+    "unresolved aom",
+    "disallowance",
+    "walang dokumento",
+    "hindi documented",
+    "walang documentation",
+    "kulang sa documents",
+    "nagmamadali",
+    "bagsak sa assessment",
+    "audit findings",
+]
+
+CONSTRAINED_KEYWORDS = [
+    "budget constraint",
+    "lack of funds",
+    "fiscal limitation",
+    "ira cut",
+    "nta reduction",
+    "unfilled plantilla",
+    "understaffed",
+    "staffing shortage",
+    "overburdened",
+    "equipment shortage",
+    "logistical delay",
+    "delayed download",
+    "capacity gap",
+    "partial implementation",
+    "in progress",
+    "job order turnover",
+    "ad hoc",
+    "manual tracking",
+    "backlog",
+    # Tagalog/Taglish resource constraints
+    "kulang sa pondo",
+    "walang pondo",
+    "kinulang sa pondo",
+    "kulang sa tao",
+    "walang tao",
+    "kinulang sa tao",
+    "kulang sa gamit",
+    "walang equipment",
+    "na-delay",
+    "nadelay",
+    "pagkaantala",
+    "mabagal ang downloading",
+    "job order umalis",
+    "nag-alisan ang jo",
+    "manual lang",
+    "nahihirapan",
+    "problema sa budget",
+    "kakulangan",
+]
+
+SUSTAINED_KEYWORDS = [
+    "institutionalized",
+    "ordinance enacted",
+    "ordinance passed",
+    "allocated budget",
+    "year-round",
+    "24/7 operations",
+    "sop in place",
+    "automated",
+    "digitized",
+    "fully functional",
+    "citizen charter",
+    "sustained delivery",
+    "continuous monitoring",
+    "permanent personnel",
+    "seal recipient",
+    "sglf incentive",
+    "culture of service",
+    "beyond compliance",
+    # Tagalog/Taglish sustained governance
+    "nainstitutionalized",
+    "na-institutionalize",
+    "tuloy-tuloy",
+    "tuloy tuloy",
+    "araw-araw",
+    "kahit walang assessment",
+    "kahit walang validation",
+    "parating ginagawa",
+    "may ordinansa",
+    "naipasa ang ordinansa",
+    "may sops",
+    "ramdam ng tao",
+    "tunay na serbisyo",
+    "hindi lang papel",
+    "para sa mamamayan",
+    "taon-taon",
 ]
 
 
@@ -238,44 +331,72 @@ class DistilBertService:
                 "PyTorch Transformers (CPU)" if self.torch_model is not None else
                 "Fallback Heuristic Engine"
             ),
+            "taglish_support": {
+                "active": True,
+                "morphological_normalizer": True,
+                "affix_handling": ["nag-", "mag-", "pag-", "pagka-", "na-", "ma-", "i-", "in-", "um-", "-an", "-in"],
+                "bilingual_governance_glossary": True,
+            },
             "benchmark_metrics": benchmark_metrics,
         }
 
     @staticmethod
     def build_standardized_input(record: Dict[str, Any]) -> str:
-        """Construct standardized DistilBERT input sequence from structured or unstructured fields."""
-        # If explicit pre-built text or single narrative field is provided without subfields
-        headline = str(record.get("headline") or "").strip()
-        position = str(record.get("current_position") or record.get("position") or record.get("role") or "").strip()
-        company = str(record.get("current_company") or record.get("company") or "").strip()
-        degree = str(record.get("degree_program") or record.get("degree") or record.get("course") or "").strip()
-        skills = str(record.get("skills") or "").strip()
-        about = str(
-            record.get("about")
+        """Construct standardized DistilBERT input sequence from structured governance fields."""
+        governance_area = str(
+            record.get("governance_area")
+            or record.get("degree_program")
+            or record.get("area")
+            or record.get("pillar")
+            or ""
+        ).strip()
+        office_role = str(
+            record.get("office_role")
+            or record.get("current_position")
+            or record.get("position")
+            or record.get("role")
+            or ""
+        ).strip()
+        lgu = str(
+            record.get("lgu")
+            or record.get("current_company")
+            or record.get("company")
+            or record.get("municipality")
+            or record.get("city")
+            or ""
+        ).strip()
+        indicators = str(
+            record.get("skills_indicators")
+            or record.get("skills")
+            or record.get("indicators")
+            or record.get("subtheme")
+            or ""
+        ).strip()
+        narrative = str(
+            record.get("narrative_quote")
+            or record.get("about")
             or record.get("bio")
             or record.get("response")
             or record.get("feedback")
             or record.get("narrative")
             or ""
         ).strip()
-        past_roles = str(record.get("past_roles") or record.get("experience") or "").strip()
+        headline = str(record.get("headline") or record.get("interview_topic") or "").strip()
         raw_text = str(record.get("text") or record.get("input_text") or "").strip()
 
         parts = []
+        if lgu:
+            parts.append(f"LGU: {lgu}")
+        if governance_area:
+            parts.append(f"Governance Area: {governance_area}")
+        if office_role:
+            parts.append(f"Office/Role: {office_role}")
         if headline:
-            parts.append(f"Headline: {headline}")
-        if position:
-            parts.append(f"Position: {position}")
-        if company:
-            parts.append(f"Company: {company}")
-        if about:
-            parts.append(f"About: {about}")
-        if skills:
-            parts.append(f"Skills: {skills}")
-        if past_roles:
-            parts.append(f"Past Roles: {past_roles}")
-        if degree and not parts:
-            parts.append(f"Degree: {degree}")
+            parts.append(f"Topic: {headline}")
+        if indicators:
+            parts.append(f"Indicators/Criteria: {indicators}")
+        if narrative:
+            parts.append(f"Narrative: {narrative}")
 
         if parts:
             if raw_text and raw_text not in " | ".join(parts):
@@ -320,118 +441,121 @@ class DistilBertService:
         return input_ids, attention_mask, words, ids
 
     @staticmethod
-    def classify_degree_alignment(record: Dict[str, Any], input_text: str) -> Dict[str, Any]:
-        """Evaluate CHED course-to-career alignment rules alongside DistilBERT."""
-        degree = str(record.get("degree_program") or record.get("degree") or record.get("course") or "").strip()
-        position = str(record.get("current_position") or record.get("position") or record.get("role") or "").strip()
-        headline = str(record.get("headline") or "").strip()
-        company = str(record.get("current_company") or record.get("company") or "").strip()
-        about = str(record.get("about") or record.get("bio") or record.get("response") or "").strip()
+    def classify_governance_institutionalization(record: Dict[str, Any], input_text: str) -> Dict[str, Any]:
+        """Evaluate local governance indicators and operational trajectories alongside DistilBERT."""
+        office_role = str(
+            record.get("office_role")
+            or record.get("current_position")
+            or record.get("position")
+            or record.get("role")
+            or ""
+        ).strip()
+        lgu = str(
+            record.get("lgu")
+            or record.get("current_company")
+            or record.get("company")
+            or ""
+        ).strip()
+        area = str(
+            record.get("governance_area")
+            or record.get("degree_program")
+            or record.get("area")
+            or ""
+        ).strip()
+        indicators = str(
+            record.get("skills_indicators")
+            or record.get("skills")
+            or record.get("indicators")
+            or ""
+        ).strip()
+        narrative = str(
+            record.get("narrative_quote")
+            or record.get("about")
+            or record.get("bio")
+            or record.get("response")
+            or ""
+        ).strip()
 
-        combined = " ".join(p for p in [position, headline, company, about, input_text] if p).lower()
+        combined = " ".join(p for p in [office_role, lgu, area, indicators, narrative, input_text] if p).lower()
+        taglish_active = is_taglish_text(combined)
+        # Augment with normalized Taglish stems so 'nag-cramming' -> 'cramming', 'kinulang' -> 'kulang', etc.
+        search_corpus = normalize_taglish_text(combined).lower()
 
         if not combined.strip():
             return {
-                "status": "unemployed",
+                "status": "deficient",
                 "aligned": False,
                 "confidence": 0.95,
-                "reason": "Empty profile / response text",
+                "reason": "Empty governance profile / transcript record",
+                "taglish_detected": False,
             }
 
-        for kw in UNEMPLOYED_KEYWORDS:
-            if kw in combined and not (position and "intern" not in position.lower() and "student" not in position.lower()):
+        # Check Deficient / Cramming indicators
+        for kw in DEFICIENT_KEYWORDS:
+            if kw in search_corpus:
                 return {
-                    "status": "unemployed",
+                    "status": "deficient",
                     "aligned": False,
                     "confidence": 0.92,
-                    "reason": f"Detected job-seeking or student indicator ('{kw}')",
+                    "reason": f"Detected compliance cramming or documentary deficiency indicator ('{kw}')",
+                    "taglish_detected": taglish_active,
                 }
 
-        degree_lower = degree.lower()
-        cs_aligned = [
-            "software", "developer", "programmer", "web", "frontend", "backend", "fullstack",
-            "full-stack", "data analyst", "data scientist", "systems analyst", "network",
-            "it specialist", "it support", "cybersecurity", "devops", "qa engineer", "tech lead",
-            "cto", "database", "cloud", "system administrator", "sysadmin", "solutions architect",
-            "machine learning", "ai engineer", "security analyst", "mobile app",
-        ]
-        cs_underemployed = [
-            "cashier", "call center", "customer service", "csr", "waiter", "waitress",
-            "sales associate", "delivery rider", "clerk", "receptionist", "encoder",
-            "data entry", "freelance graphics", "video editor", "virtual assistant",
-            "support representative", "barista", "store crew",
-        ]
+        # Check Sustained / Institutionalized indicators
+        for kw in SUSTAINED_KEYWORDS:
+            if kw in search_corpus:
+                return {
+                    "status": "sustained",
+                    "aligned": True,
+                    "confidence": 0.92,
+                    "reason": f"Detected institutionalized governance indicator ('{kw}')",
+                    "taglish_detected": taglish_active,
+                }
 
-        if not degree_lower or re.search(
-            r"computer\s*science|information\s*technology|\bit\b|comp\s*sci|software|information\s*systems|data\s*mining",
-            degree_lower,
-        ):
-            for kw in cs_underemployed:
-                if kw in combined:
-                    return {
-                        "status": "underemployed",
-                        "aligned": False,
-                        "confidence": 0.90,
-                        "reason": f"Role/activity ('{kw}') is outside core CS/IT specialization",
-                    }
-            for kw in cs_aligned:
-                if kw in combined:
-                    return {
-                        "status": "employed",
-                        "aligned": True,
-                        "confidence": 0.94,
-                        "reason": f"Role aligns with Computing/IT specialization ('{kw}')",
-                    }
+        # Check Constrained / In-Progress indicators
+        for kw in CONSTRAINED_KEYWORDS:
+            if kw in search_corpus:
+                return {
+                    "status": "constrained",
+                    "aligned": False,
+                    "confidence": 0.88,
+                    "reason": f"Detected structural capacity or resource limitation ('{kw}')",
+                    "taglish_detected": taglish_active,
+                }
 
-        if re.search(r"business|marketing|management|commerce|entrepreneur", degree_lower):
-            bus_kw = ["manager", "director", "executive", "marketing", "sales", "business analyst", "operations", "consultant", "founder"]
-            if any(k in combined for k in bus_kw):
-                return {"status": "employed", "aligned": True, "confidence": 0.92, "reason": "Role aligns with Business/Management program"}
-            return {"status": "underemployed", "aligned": False, "confidence": 0.80, "reason": "Role outside Business Management track"}
-
-        if re.search(r"accountancy|accounting", degree_lower):
-            acct_kw = ["accountant", "auditor", "cpa", "bookkeeper", "tax", "finance", "audit"]
-            if any(k in combined for k in acct_kw):
-                return {"status": "employed", "aligned": True, "confidence": 0.94, "reason": "Role aligns with Accountancy program"}
-            return {"status": "underemployed", "aligned": False, "confidence": 0.84, "reason": "Role outside Accountancy specialization"}
-
-        if re.search(r"engineering|engineer", degree_lower):
-            eng_kw = ["engineer", "project manager", "site", "cad", "estimator", "construction", "maintenance", "developer"]
-            if any(k in combined for k in eng_kw):
-                return {"status": "employed", "aligned": True, "confidence": 0.93, "reason": "Role matches Engineering specialization"}
-            return {"status": "underemployed", "aligned": False, "confidence": 0.83, "reason": "Role outside Engineering specialization"}
-
-        if re.search(r"education|teacher|teaching", degree_lower):
-            edu_kw = ["teacher", "instructor", "professor", "tutor", "educator", "principal", "faculty", "academic"]
-            if any(k in combined for k in edu_kw):
-                return {"status": "employed", "aligned": True, "confidence": 0.94, "reason": "Role matches Education specialization"}
-            return {"status": "underemployed", "aligned": False, "confidence": 0.84, "reason": "Role outside Education specialization"}
-
-        # General fallback when no specific degree is set
-        if any(k in combined for k in cs_aligned):
-            return {"status": "employed", "aligned": True, "confidence": 0.88, "reason": "Professional technical role detected"}
-        if any(k in combined for k in cs_underemployed):
-            return {"status": "underemployed", "aligned": False, "confidence": 0.85, "reason": "Support/non-specialized role detected"}
+        # Default trajectory evaluation based on role/mandate presence
+        if office_role or area:
+            return {
+                "status": "sustained",
+                "aligned": True,
+                "confidence": 0.78,
+                "reason": "Active governance mandate / focal office specified",
+                "taglish_detected": taglish_active,
+            }
 
         return {
-            "status": "employed" if (position or company) else "unemployed",
-            "aligned": bool(position or company),
-            "confidence": 0.78,
-            "reason": "Active role detected" if (position or company) else "No active employment role specified",
+            "status": "constrained",
+            "aligned": False,
+            "confidence": 0.75,
+            "reason": "General governance record without explicit institutionalization markers",
+            "taglish_detected": taglish_active,
         }
 
+    # Backward-compatible alias
+    classify_degree_alignment = classify_governance_institutionalization
+
     def predict_single(self, record: Dict[str, Any], use_hybrid_rules: bool = True) -> Dict[str, Any]:
-        """Run DistilBERT sequence inference and return logits, probabilities, tokens, and classification."""
+        """Run DistilBERT sequence inference and return logits, probabilities, tokens, and governance trajectory."""
         input_text = self.build_standardized_input(record)
-        alignment = self.classify_degree_alignment(record, input_text)
+        alignment = self.classify_governance_institutionalization(record, input_text)
 
         if not input_text.strip():
             return {
                 "input_text": "",
-                "distilbert_label": "unemployed",
-                "final_status": "unemployed",
+                "distilbert_label": "deficient",
+                "final_status": "deficient",
                 "confidence": 1.0,
-                "probabilities": {"employed": 0.0, "underemployed": 0.0, "unemployed": 1.0},
+                "probabilities": {"sustained": 0.0, "constrained": 0.0, "deficient": 1.0},
                 "logits": [-2.5, -2.5, 3.5],
                 "token_count": 2,
                 "tokens_preview": ["[CLS]", "[SEP]"],
@@ -462,7 +586,11 @@ class DistilBertService:
             probs = softmax(raw_logits)
         else:
             # Deterministic fallback if ONNX session could not load
-            status_map = {"employed": [2.4, -0.8, -1.6], "underemployed": [-0.5, 2.2, -1.2], "unemployed": [-1.5, -0.9, 2.5]}
+            status_map = {
+                "sustained": [2.4, -0.8, -1.6],
+                "constrained": [-0.5, 2.2, -1.2],
+                "deficient": [-1.5, -0.9, 2.5],
+            }
             raw_logits = np.array(status_map.get(alignment["status"], [0.0, 0.0, 0.0]), dtype=np.float64)
             probs = softmax(raw_logits)
 
@@ -477,20 +605,20 @@ class DistilBertService:
         distilbert_label = self.id2label.get(best_idx, "unknown")
         distilbert_conf = round(float(probs[best_idx]), 4)
 
-        # Hybrid resolution combining DistilBERT sequence confidence with degree-alignment taxonomy
+        # Hybrid resolution combining DistilBERT sequence confidence with SGLG institutionalization rules
         final_status = distilbert_label
         hybrid_override = False
         if use_hybrid_rules:
-            if distilbert_label == "employed":
-                if alignment["status"] == "unemployed" and distilbert_conf < 0.90:
-                    final_status = "unemployed"
+            if distilbert_label == "sustained":
+                if alignment["status"] == "deficient" and distilbert_conf < 0.90:
+                    final_status = "deficient"
                     hybrid_override = True
-                elif alignment["status"] == "underemployed" and not alignment["aligned"]:
-                    final_status = "underemployed"
+                elif alignment["status"] == "constrained" and not alignment["aligned"]:
+                    final_status = "constrained"
                     hybrid_override = True
-            elif distilbert_label == "underemployed":
-                if alignment["status"] == "unemployed":
-                    final_status = "unemployed"
+            elif distilbert_label == "constrained":
+                if alignment["status"] == "deficient":
+                    final_status = "deficient"
                     hybrid_override = True
 
         return {

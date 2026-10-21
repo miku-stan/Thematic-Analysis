@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DistilBERT Thematic Analysis Studio</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
+
 <body>
   <!-- Topbar -->
   <header class="topbar">
     <div class="brand-group">
       <div class="brand-icon" aria-hidden="true">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
         </svg>
       </div>
       <div>
@@ -31,11 +34,20 @@
 
     <div class="topbar-actions">
       <button class="btn btn-secondary btn-sm" onclick="loadSampleDataset('csv')" id="topbarSampleBtn">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+        </svg>
         Load Teacher's SGLG Dataset
       </button>
       <button class="btn btn-primary btn-sm" onclick="triggerFileInput()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
         Upload Dataset
       </button>
       <button class="btn btn-secondary btn-sm" id="themeToggleBtn" onclick="toggleThemeMode()">Light Mode</button>
@@ -59,6 +71,10 @@
       <button class="nav-tab" data-tab="codebook" onclick="switchTab('codebook')">
         4. Custom Codebook &amp; DistilBERT Specs
       </button>
+      <button class="nav-tab" data-tab="narrative" onclick="switchTab('narrative')">
+        5. Qualitative Thematic Analysis Narrative Synthesis
+        <span class="tab-badge" id="narrativeBadge">0</span>
+      </button>
     </nav>
 
     <!-- TAB 1: DEDICATED FILE INGESTION STUDIO -->
@@ -69,31 +85,64 @@
           <div class="card-header">
             <div>
               <div class="card-title">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <polyline points="10 9 9 9 8 9" />
+                </svg>
                 Dataset File Ingestion
               </div>
-              <div class="card-subtitle">Import structured or unstructured dataset files for DistilBERT sequence inference and automated thematic coding</div>
+              <div class="card-subtitle">Import structured or unstructured dataset files for DistilBERT sequence
+                inference and automated thematic coding</div>
             </div>
             <div class="template-links">
               <span class="template-label">Download Templates:</span>
               <a class="btn btn-secondary btn-sm" href="/api/samples/csv?download=true">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
                 CSV
               </a>
               <a class="btn btn-secondary btn-sm" href="/api/samples/xlsx?download=true">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
                 Excel (.xlsx)
               </a>
               <a class="btn btn-secondary btn-sm" href="/api/samples/xml?download=true">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
                 XML
               </a>
               <a class="btn btn-secondary btn-sm" href="/api/samples/json?download=true">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
                 JSON
               </a>
               <a class="btn btn-secondary btn-sm" href="/api/samples/txt?download=true">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
                 Plain Text
               </a>
             </div>
@@ -102,44 +151,63 @@
             <!-- Dropzone -->
             <div id="dropzone" class="dropzone" onclick="document.getElementById('fileInput').click()">
               <div class="dropzone-icon">
-                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="17 8 12 3 7 8"/>
-                  <line x1="12" y1="3" x2="12" y2="15"/>
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
               </div>
               <div class="dropzone-title">Drag &amp; drop your dataset file(s) here, or click to browse</div>
-              <div class="dropzone-sub">Upload Word transcripts (.docx), CSV, Excel, XML, JSON, or Plain-text files (supports multi-file selection, up to 10 MB and 5,000 records)</div>
+              <div class="dropzone-sub">Upload Word transcripts (.docx, .doc), PDF transcripts (.pdf), CSV, Excel, XML,
+                JSON, or Plain-text files (supports multi-file selection, up to 10 MB and 5,000 records)</div>
               <div class="format-badges">
-                <span class="format-badge" style="border-color:var(--accent); color:var(--accent); font-weight:700;">Word Transcripts (.docx)</span>
-                <span class="format-badge">CSV (.csv)</span>
+                <span class="format-badge" style="border-color:#3b82f6; color:#60a5fa; font-weight:700;">Word
+                  Transcripts (.docx, .doc)</span>
+                <span class="format-badge" style="border-color:#f43f5e; color:#fb7185; font-weight:700;">PDF Transcripts
+                  (.pdf)</span>
                 <span class="format-badge">Excel (.xlsx)</span>
+                <span class="format-badge">CSV (.csv)</span>
                 <span class="format-badge">XML (.xml)</span>
                 <span class="format-badge">JSON (.json)</span>
                 <span class="format-badge">Plain Text (.txt)</span>
               </div>
-              <input id="fileInput" type="file" accept=".csv,.xlsx,.json,.xml,.txt,.docx" multiple style="display:none" onchange="handleFileSelect(event)" />
+              <input id="fileInput" type="file" accept=".csv,.xlsx,.json,.xml,.txt,.docx,.doc,.pdf" multiple
+                style="display:none" onchange="handleFileSelect(event)" />
             </div>
 
             <!-- Uploaded File Preview & Field Mapper -->
-            <div id="uploadPreviewBox" style="display:none; margin-top:20px; border-top:1px solid var(--border-color); padding-top:20px;">
+            <div id="uploadPreviewBox"
+              style="display:none; margin-top:20px; border-top:1px solid var(--border-color); padding-top:20px;">
               <div class="upload-file-header">
                 <div class="upload-file-info">
                   <div class="file-icon-badge">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
                   </div>
                   <div>
                     <div style="font-weight:800; font-size:1rem;" id="uploadedFileName">dataset.csv</div>
-                    <div style="font-size:0.78rem; color:var(--text-muted);" id="uploadedFileMeta">0 records detected</div>
+                    <div style="font-size:0.78rem; color:var(--text-muted);" id="uploadedFileMeta">0 records detected
+                    </div>
                   </div>
                 </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
                   <button class="btn btn-secondary btn-sm" onclick="clearUploadedFile()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
                     Clear File
                   </button>
                   <button class="btn btn-primary" id="runFileAnalysisBtn" onclick="runUploadedFileAnalysis()">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
                     Run DistilBERT Thematic Analysis
                   </button>
                 </div>
@@ -148,19 +216,27 @@
               <!-- Column Mapping Grid -->
               <div class="column-mapping-container">
                 <div class="column-mapping-header">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <line x1="3" y1="9" x2="21" y2="9" />
+                    <line x1="9" y1="21" x2="9" y2="9" />
+                  </svg>
                   <span>Field &amp; Column Mapping (Auto-detected from file headers / tags)</span>
                 </div>
-                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;" id="columnMapperGrid"></div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;"
+                  id="columnMapperGrid"></div>
               </div>
 
               <!-- Ingestion Parameters Grid -->
               <div class="pipeline-params-grid">
                 <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
-                  <input type="checkbox" id="useHybridRulesCheckbox" checked style="margin-top:4px; transform:scale(1.15);" />
+                  <input type="checkbox" id="useHybridRulesCheckbox" checked
+                    style="margin-top:4px; transform:scale(1.15);" />
                   <div>
                     <div style="font-weight:700; font-size:0.86rem;">Enable CHED Degree-Alignment Hybrid Layer</div>
-                    <div style="font-size:0.75rem; color:var(--text-muted);">Combines DistilBERT Softmax sequence probabilities with course-major taxonomy rules</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">Combines DistilBERT Softmax sequence
+                      probabilities with course-major taxonomy rules</div>
                   </div>
                 </label>
 
@@ -177,11 +253,17 @@
 
               <!-- Sample Rows Preview Table -->
               <div style="margin-top:16px;">
-                <div style="font-size:0.78rem; font-weight:700; color:var(--text-muted); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <div
+                  style="font-size:0.78rem; font-weight:700; color:var(--text-muted); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
                   Ingestion Preview (First 5 Records)
                 </div>
-                <div class="table-wrap" style="max-height:240px; overflow-y:auto; border:1px solid var(--border-color); border-radius:var(--radius-sm);">
+                <div class="table-wrap"
+                  style="max-height:240px; overflow-y:auto; border:1px solid var(--border-color); border-radius:var(--radius-sm);">
                   <table class="data-table" id="uploadPreviewTable">
                     <thead></thead>
                     <tbody></tbody>
@@ -191,8 +273,12 @@
 
               <!-- Bottom Trigger -->
               <div style="margin-top:20px; display:flex; justify-content:flex-end;">
-                <button class="btn btn-primary" style="padding:12px 24px; font-size:0.92rem;" onclick="runUploadedFileAnalysis()">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <button class="btn btn-primary" style="padding:12px 24px; font-size:0.92rem;"
+                  onclick="runUploadedFileAnalysis()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
                   Execute DistilBERT Thematic Analysis
                 </button>
               </div>
@@ -214,7 +300,7 @@
         <div class="kpi-card">
           <div class="kpi-label">Dominant Theme</div>
           <div class="kpi-value" id="kpiDominantTheme" style="font-size:1.15rem; color:var(--accent);">—</div>
-          <div class="kpi-sub" id="kpiThemeCountSub">Across 8 active codebook themes</div>
+          <div class="kpi-sub" id="kpiThemeCountSub">Across 6 core SGLG governance themes</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label" id="kpiOutcomeLabel">Governance Institutionalization Rate</div>
@@ -238,28 +324,67 @@
         <div class="card-header">
           <div>
             <div class="card-title">Study 3 Thematic Framework &amp; Academic Synthesis</div>
-            <div class="card-subtitle">Seal of Good Local Governance (SGLG) Qualitative Findings &amp; Core Analytical Benchmarks</div>
+            <div class="card-subtitle">Seal of Good Local Governance (SGLG) Qualitative Findings &amp; Core Analytical
+              Benchmarks</div>
           </div>
-          <div style="display:flex; gap:6px; flex-wrap:wrap;">
-            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('csv')">Export .CSV</button>
-            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('xlsx')">Export .XLSX</button>
-            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('json')">Export .JSON</button>
-            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('xml')">Export .XML</button>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+            <span style="font-size:0.75rem; color:var(--text-muted); margin-right:2px; font-weight:600;">QUANTITATIVE
+              EXPORT:</span>
+            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('xlsx')"
+              title="Export 5-sheet analytical Excel workbook">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+              Excel (.xlsx)
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('csv')">CSV</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('json')">JSON</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('xml')">XML</button>
+            <button class="btn btn-secondary btn-sm" onclick="triggerFileInput()"
+              title="Upload Word transcripts (.docx, .doc), PDF (.pdf), Excel, or CSV directly">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              Upload (.docx/.pdf)
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="switchTab('narrative')"
+              style="background:linear-gradient(135deg, #4f46e5, #06b6d4); border:none; margin-left:4px; font-weight:600;"
+              title="Jump to Tab 5 to view and download Qualitative Thematic Analysis Narrative Synthesis in Word or PDF">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              </svg>
+              Thematic Analysis Manuscript (Word / PDF) &rarr;
+            </button>
           </div>
         </div>
         <div class="card-body">
           <div class="framework-guidelines-grid">
             <div class="framework-guide-box">
               <div class="guide-tag">Theme 4 · Central Analytic Benchmark</div>
-              <p class="guide-quote">“The strongest evidence of institutionalization was not the volume of documentation prepared for assessment, but the continuation of governance practices as part of regular administrative and service-delivery routines.”</p>
+              <p class="guide-quote">“The strongest evidence of institutionalization was not the volume of documentation
+                prepared for assessment, but the continuation of governance practices as part of regular administrative
+                and service-delivery routines.”</p>
             </div>
             <div class="framework-guide-box">
               <div class="guide-tag">Theme 6 · Culminating Conclusion</div>
-              <p class="guide-quote">“Across cases, sustainable SGLG performance was distinguished from documentary compliance by the extent to which governance practices were institutionalized, owned by responsible offices, continuously monitored, and maintained outside the formal assessment cycle.”</p>
+              <p class="guide-quote">“Across cases, sustainable SGLG performance was distinguished from documentary
+                compliance by the extent to which governance practices were institutionalized, owned by responsible
+                offices, continuously monitored, and maintained outside the formal assessment cycle.”</p>
             </div>
             <div class="framework-guide-box">
               <div class="guide-tag">Theme 1 · Suggested Academic Sequence</div>
-              <p class="guide-text"><strong>1.</strong> State dominant pattern &rarr; <strong>2.</strong> Show supporting cases/stakeholders &rarr; <strong>3.</strong> Present short de-identified quotations (e.g. <em>LCE-03</em>) &rarr; <strong>4.</strong> Identify contrasting cases &rarr; <strong>5.</strong> Interpret for sustained SGLG performance.</p>
+              <p class="guide-text"><strong>1.</strong> State dominant pattern &rarr; <strong>2.</strong> Show
+                supporting cases/stakeholders &rarr; <strong>3.</strong> Present short de-identified quotations (e.g.
+                <em>LCE-03</em>) &rarr; <strong>4.</strong> Identify contrasting cases &rarr; <strong>5.</strong>
+                Interpret for sustained SGLG performance.
+              </p>
             </div>
           </div>
 
@@ -272,9 +397,12 @@
         <div class="card-header">
           <div>
             <div class="card-title">Theme 3: Cross-Case Operational Barriers Comparison Matrix</div>
-            <div class="card-subtitle">Comparative assessment of operational issues and technical bottlenecks across LGU-01, LGU-02, and LGU-03</div>
+            <div class="card-subtitle">Comparative assessment of operational issues and technical bottlenecks across
+              LGU-01, LGU-02, and LGU-03</div>
           </div>
-          <span class="status-badge" style="background:var(--accent-soft); color:var(--accent); font-weight:700;">Cross-Case Comparative Matrix</span>
+          <span class="status-badge"
+            style="background:var(--accent-soft); color:var(--accent); font-weight:700;">Cross-Case Comparative
+            Matrix</span>
         </div>
         <div class="card-body">
           <div class="table-wrap">
@@ -299,9 +427,12 @@
         <div class="card-header">
           <div>
             <div class="card-title">Respondent Group &times; Theme Distribution Matrix</div>
-            <div class="card-subtitle">Tripartite stakeholder comparison across Mayor/Admin, LCE/Focal Persons, and DILG/PLGU evaluators</div>
+            <div class="card-subtitle">Tripartite stakeholder comparison across Mayor/Admin, LCE/Focal Persons, and
+              DILG/PLGU evaluators</div>
           </div>
-          <span class="status-badge" style="background:rgba(99, 102, 241, 0.15); color:var(--accent); font-weight:700;">Tripartite Governance Breakdown</span>
+          <span class="status-badge"
+            style="background:rgba(99, 102, 241, 0.15); color:var(--accent); font-weight:700;">Tripartite Governance
+            Breakdown</span>
         </div>
         <div class="card-body">
           <div class="table-wrap">
@@ -339,7 +470,8 @@
           <div class="card-header">
             <div>
               <div class="card-title" id="crossTabCardTitle">Theme &times; Governance Trajectory Cross-Tabulation</div>
-              <div class="card-subtitle" id="crossTabCardSubtitle">How each thematic category correlates with Sustained, Constrained, and Deficient governance outcomes</div>
+              <div class="card-subtitle" id="crossTabCardSubtitle">How each thematic category correlates with Sustained,
+                Constrained, and Deficient governance outcomes</div>
             </div>
           </div>
           <div class="card-body">
@@ -393,19 +525,36 @@
         <div class="card-header">
           <div>
             <div class="card-title">Coded Corpus Explorer &amp; DistilBERT Sequence Inspector</div>
-            <div class="card-subtitle">Click "Inspect" on any record to view WordPiece tokens, Softmax logits, and theme scoring</div>
+            <div class="card-subtitle">Click "Inspect" on any record to view WordPiece tokens, Softmax logits, and theme
+              scoring</div>
           </div>
-          <div style="display:flex; gap:6px; flex-wrap:wrap;">
-            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('csv')">Download CSV</button>
-            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('xlsx')">Download Excel (.xlsx)</button>
-            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('json')">Download JSON</button>
-            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('xml')">Download XML</button>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('xlsx')" title="Download Excel (.xlsx)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+              Excel (.xlsx)
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('csv')">CSV</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('json')">JSON</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAnalysis('xml')">XML</button>
+            <button class="btn btn-secondary btn-sm" onclick="triggerFileInput()"
+              title="Upload Word transcripts (.docx, .doc), PDF (.pdf), Excel, or CSV directly">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              Upload (.docx/.pdf)
+            </button>
           </div>
         </div>
         <div class="card-body">
           <!-- Filters Bar -->
           <div class="records-filters">
-            <input id="recordSearchInput" class="input" placeholder="Search by name, theme, code, skill, or text..." oninput="renderRecordsTable()" />
+            <input id="recordSearchInput" class="input" placeholder="Search by name, theme, code, skill, or text..."
+              oninput="renderRecordsTable()" />
             <select id="filterThemeSelect" class="select" onchange="renderRecordsTable()">
               <option value="ALL">All Primary Themes</option>
             </select>
@@ -417,9 +566,9 @@
             </select>
             <select id="filterStatusSelect" class="select" onchange="renderRecordsTable()">
               <option value="ALL">All Governance Trajectories</option>
-              <option value="employed">Sustained / Institutionalized</option>
-              <option value="underemployed">Constrained / In-Progress</option>
-              <option value="unemployed">Deficient / Unaligned</option>
+              <option value="sustained">Sustained / Institutionalized</option>
+              <option value="constrained">Constrained / In-Progress</option>
+              <option value="deficient">Deficient / Unaligned</option>
             </select>
             <select id="filterClusterSelect" class="select" onchange="renderRecordsTable()">
               <option value="ALL">All Emergent Clusters</option>
@@ -465,16 +614,18 @@
           <div class="card-header">
             <div>
               <div class="card-title">Customizable Thematic Codebook</div>
-              <div class="card-subtitle">Modify existing themes, add new custom themes, or edit seed keywords and re-run coding</div>
+              <div class="card-subtitle">Modify existing themes, add new custom themes, or edit seed keywords and re-run
+                coding</div>
             </div>
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-              <select id="codebookPresetSelect" class="select" style="padding:5px 10px; font-size:0.82rem; max-width:270px;" onchange="handlePresetSelect(this.value)">
-                <option value="sglg_governance" selected>Teacher's SGLG Study (6 Themes)</option>
-                <option value="alumni_tracer">Alumni Tracer Study (8 Themes)</option>
+              <select id="codebookPresetSelect" class="select"
+                style="padding:5px 10px; font-size:0.82rem; max-width:270px;" onchange="handlePresetSelect(this.value)">
+                <option value="sglg_governance" selected>Teacher's SGLG Study (6 Core Themes)</option>
               </select>
               <button class="btn btn-secondary btn-sm" onclick="resetCodebookThemes()">Reset Defaults</button>
               <button class="btn btn-secondary btn-sm" onclick="addNewThemeCard()">+ Add Custom Theme</button>
-              <button class="btn btn-primary btn-sm" onclick="saveAndReanalyzeThemes()">Save &amp; Re-Analyze Corpus</button>
+              <button class="btn btn-primary btn-sm" onclick="saveAndReanalyzeThemes()">Save &amp; Re-Analyze
+                Corpus</button>
             </div>
           </div>
           <div class="card-body" id="codebookEditorContainer"></div>
@@ -499,17 +650,179 @@
                 <div class="card-subtitle">How raw text is transformed into outcome probabilities and themes</div>
               </div>
             </div>
-            <div class="card-body" style="font-size:0.82rem; color:var(--text-secondary); display:flex; flex-direction:column; gap:10px;">
-              <div class="insight-item"><strong>1. Standardized Sequence Construction:</strong> Joins <code>Headline | Position | Company | About | Skills</code> into a unified semantic sequence.</div>
-              <div class="insight-item"><strong>2. WordPiece Subword Tokenization:</strong> Maps text into 30,522-vocab subword IDs prepended with <code>[CLS]</code> (101) and appended with <code>[SEP]</code> (102).</div>
-              <div class="insight-item"><strong>3. Dual Embedding Lookup:</strong> Combines Token Embeddings + Positional Embeddings into a $(1 \times L \times 768)$ dense tensor.</div>
-              <div class="insight-item"><strong>4. 6-Layer Multi-Head Self-Attention:</strong> 12 attention heads ($d_k = 64$) link intent modifiers (e.g., <em>"seeking"</em>, <em>"aspiring"</em>) directly to role nouns.</div>
-              <div class="insight-item"><strong>5. [CLS] Pooled Representation:</strong> Extracts the 768-dimensional contextual summary vector at index 0.</div>
-              <div class="insight-item"><strong>6. Linear Logits &amp; Softmax:</strong> Projects $\mathbb{R}^{768} \rightarrow \mathbb{R}^3$ logits and computes Softmax probabilities $P(y=k|\mathbf{x})$.</div>
-              <div class="insight-item"><strong>7. Thematic Coding &amp; TF-IDF Clustering:</strong> Combines codebook phrase weights, DistilBERT priors, and K-Means clustering.</div>
+            <div class="card-body"
+              style="font-size:0.82rem; color:var(--text-secondary); display:flex; flex-direction:column; gap:10px;">
+              <div class="insight-item"><strong>1. Standardized Sequence Construction:</strong> Joins
+                <code>Headline | Position | Company | About | Skills</code> into a unified semantic sequence.
+              </div>
+              <div class="insight-item"><strong>2. WordPiece Subword Tokenization:</strong> Maps text into 30,522-vocab
+                subword IDs prepended with <code>[CLS]</code> (101) and appended with <code>[SEP]</code> (102).</div>
+              <div class="insight-item"><strong>3. Dual Embedding Lookup:</strong> Combines Token Embeddings +
+                Positional Embeddings into a $(1 \times L \times 768)$ dense tensor.</div>
+              <div class="insight-item"><strong>4. 6-Layer Multi-Head Self-Attention:</strong> 12 attention heads ($d_k
+                = 64$) link intent modifiers (e.g., <em>"seeking"</em>, <em>"aspiring"</em>) directly to role nouns.
+              </div>
+              <div class="insight-item"><strong>5. [CLS] Pooled Representation:</strong> Extracts the 768-dimensional
+                contextual summary vector at index 0.</div>
+              <div class="insight-item"><strong>6. Linear Logits &amp; Softmax:</strong> Projects $\mathbb{R}^{768}
+                \rightarrow \mathbb{R}^3$ logits and computes Softmax probabilities $P(y=k|\mathbf{x})$.</div>
+              <div class="insight-item"><strong>7. Thematic Coding &amp; TF-IDF Clustering:</strong> Combines codebook
+                phrase weights, DistilBERT priors, and K-Means clustering.</div>
+            </div>
+          </div>
+
+          <!-- Taglish Linguistic Adapter & Morphology Architecture Card -->
+          <div class="card" style="margin-top:20px;">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Taglish Linguistic Processing &amp; Morphological Adapter</div>
+                <div class="card-subtitle">Mixed English-Tagalog qualitative handling, affix stripping, and bilingual stopwords</div>
+              </div>
+            </div>
+            <div class="card-body"
+              style="font-size:0.82rem; color:var(--text-secondary); display:flex; flex-direction:column; gap:10px;">
+              <div class="insight-item"><strong>1. Taglish Affix Normalizer:</strong> Strips verbal and nominal affixes (<code>nag-</code>, <code>mag-</code>, <code>pag-</code>, <code>pagka-</code>, <code>na-</code>, <code>ma-</code>, <code>i-</code>, <code>-in-</code>, <code>-an</code>) to match root governance keywords (e.g., <em>"nag-cramming"</em> &rarr; <em>"cramming"</em>, <em>"kinulang"</em> &rarr; <em>"kulang"</em>).</div>
+              <div class="insight-item"><strong>2. Bilingual SGLG Codebook:</strong> Core themes populated with verified Tagalog governance terminology (e.g., <em>"pamumuno"</em>, <em>"ugnayan"</em>, <em>"kulang sa tao"</em>, <em>"tuloy-tuloy"</em>, <em>"ramdam ng tao"</em>).</div>
+              <div class="insight-item"><strong>3. Comprehensive Tagalog Stop Words:</strong> Prunes 80+ grammatical particles (<code>ang</code>, <code>mga</code>, <code>sa</code>, <code>ng</code>, <code>dahil</code>, <code>pero</code>, <code>lang</code>, <code>po</code>, <code>natin</code>) so TF-IDF and K-Means only capture substantive thematic concepts.</div>
+              <div class="insight-item"><strong>4. Emergent Code Fallback:</strong> Statements lacking predefined codebook triggers are automatically assigned salient candidate codes (<code>[Emergent]</code>) and labeled as <code>Unassigned / Needs Review</code> for qualitative researcher verification.</div>
+            </div>
+          </div>
+
+          <!-- Academic Defense & Methodological FAQ Card -->
+          <div class="card" style="margin-top:20px; border-left:4px solid #3b82f6;">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Thesis Defense Blueprint: DistilBERT NLP &amp; Thematic Analysis FAQ</div>
+                <div class="card-subtitle">Methodological justification for committee panels and academic defense</div>
+              </div>
+            </div>
+            <div class="card-body"
+              style="font-size:0.82rem; color:var(--text-secondary); display:flex; flex-direction:column; gap:12px;">
+              <div class="insight-item">
+                <strong style="color:var(--text-primary); font-size:0.86rem;">Q1: Does DistilBERT "understand context" to generate codes?</strong><br>
+                <span><strong>Yes, but as an Encoder, not a Generative LLM.</strong> DistilBERT uses 12 bidirectional self-attention heads to understand the semantic context of each statement. However, in this system, it is an <em>Encoder-Classifier</em> ($[CLS] \rightarrow \text{Logits}$), mapping context into 3 governance trajectories (<em>Sustained</em>, <em>Constrained</em>, <em>Deficient</em>). Codes and narratives are assembled by the CAQDAS engine using this trajectory to contextualize matched empirical quotes.</span>
+              </div>
+              <div class="insight-item">
+                <strong style="color:var(--text-primary); font-size:0.86rem;">Q2: Why not use a generative model (like ChatGPT or Gemini) to generate codes?</strong><br>
+                <span><strong>To eliminate AI hallucinations and ensure auditability.</strong> In academic qualitative research, generative LLMs often invent synthetic quotes or hallucinate themes not in the raw data. This hybrid architecture guarantees that 100% of quotes are authentic verbatim participant statements traceable to informant IDs (e.g., LCE-03, MPDC-02).</span>
+              </div>
+              <div class="insight-item">
+                <strong style="color:var(--text-primary); font-size:0.86rem;">Q3: How does DistilBERT handle Taglish if it has an English vocabulary?</strong><br>
+                <span><strong>Via Anchor Nouns &amp; Morphological Normalization.</strong> SGLG transcripts in Philippine local governance are anchored in English operational terms (<em>"budget"</em>, <em>"ordinance"</em>, <em>"cramming"</em>, <em>"assessment"</em>). The Taglish Linguistic Normalizer strips Tagalog affixes (e.g., <em>"nag-cramming"</em> &rarr; <em>"cramming"</em>, <em>"kinulang"</em> &rarr; <em>"kulang"</em>) before tokenization, allowing DistilBERT to classify the trajectory accurately.</span>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: QUALITATIVE THEMATIC ANALYSIS NARRATIVE SYNTHESIS -->
+    <section id="tab-narrative" class="tab-panel">
+      <!-- Toolbar & Actions Card -->
+      <div class="card narrative-control-card">
+        <div class="card-header" style="flex-wrap:wrap; gap:12px;">
+          <div>
+            <div class="card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              </svg>
+              Qualitative Thematic Analysis Narrative Synthesis
+            </div>
+            <div class="card-subtitle">
+              Evidence-grounded scholarly manuscript draft synthesizing themes, participant voices, and cross-case
+              contrasts for thesis and study writeup
+            </div>
+          </div>
+          <div class="narrative-actions-row">
+            <button class="btn btn-secondary btn-sm" onclick="downloadNarrativeFile('doc')"
+              style="font-weight:600; border-color:#3b82f6; color:#60a5fa;"
+              title="Download as Microsoft Word (.doc / .docx) formatted manuscript">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+              Download Word (.doc)
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="printNarrativeManuscript()"
+              style="font-weight:600; border-color:#f43f5e; color:#fb7185;"
+              title="Open clean print preview to Save as PDF">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9" />
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" />
+              </svg>
+              Save as PDF / Print
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="copyNarrativeDraft()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              Copy Text
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="downloadNarrativeFile('md')">
+              Markdown (.md)
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="downloadNarrativeFile('txt')">
+              Text (.txt)
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="refreshNarrativeDraft()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10" />
+                <polyline points="1 20 1 14 7 14" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+              </svg>
+              Regenerate Draft
+            </button>
+          </div>
+        </div>
+        <div class="card-body narrative-filter-strip">
+          <div class="narrative-filters-group">
+            <label class="form-label" style="margin:0; min-width:240px;">
+              Filter by LGU Case
+              <select class="select" id="narrativeCaseFilterSelect" onchange="onNarrativeCaseFilterChange()">
+                <option value="all">All Participating LGUs (Multi-Case)</option>
+              </select>
+            </label>
+            <div class="narrative-guide-pill">
+              <span class="status-dot" style="background:var(--accent);"></span>
+              <span><strong>Academic Draft:</strong> Follows Braun &amp; Clarke + Teacher's 5-Step Sequence. Ready for
+                Word (.doc) or PDF export.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manuscript Empty Placeholder -->
+      <div id="narrativeEmptyPlaceholder" class="card"
+        style="display:none; text-align:center; padding:48px 24px; margin-top:20px;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+          style="margin-bottom:16px; color:var(--text-muted);">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+        </svg>
+        <h3 style="margin-bottom:8px; font-size:1.15rem;">No Qualitative Narrative Generated Yet</h3>
+        <p style="color:var(--text-secondary); max-width:540px; margin:0 auto 20px; font-size:0.9rem;">
+          Load the Teacher's SGLG dataset or ingest interview transcripts, then run thematic analysis to generate the
+          Thematic Analysis academic narrative draft.
+        </p>
+        <button class="btn btn-primary" onclick="loadSampleDataset('csv')">Load Teacher's SGLG Dataset &amp;
+          Synthesize</button>
+      </div>
+
+      <!-- Manuscript Presentation View -->
+      <div id="narrativeManuscriptBox" class="manuscript-paper" style="margin-top:20px;">
+        <div id="narrativeContentContainer"></div>
       </div>
     </section>
   </main>
@@ -520,10 +833,15 @@
       <div class="card-header">
         <div>
           <div class="card-title" id="modalRecordTitle">DistilBERT Deep Sequence Inspector</div>
-          <div class="card-subtitle" id="modalRecordSubtitle">WordPiece Tokenization, Raw Logits, Softmax Probabilities &amp; Thematic Coding</div>
+          <div class="card-subtitle" id="modalRecordSubtitle">WordPiece Tokenization, Raw Logits, Softmax Probabilities
+            &amp; Thematic Coding</div>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeInspectorModal()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
           Close
         </button>
       </div>
@@ -536,4 +854,5 @@
 
   <script src="/static/app.js"></script>
 </body>
+
 </html>
